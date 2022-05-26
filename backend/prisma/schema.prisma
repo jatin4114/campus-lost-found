@@ -1,0 +1,334 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  MODERATOR
+  ADMIN
+}
+
+enum ItemType {
+  LOST
+  FOUND
+}
+
+enum ItemStatus {
+  ACTIVE
+  CLAIM_PENDING
+  CLAIMED
+  RESOLVED
+  EXPIRED
+}
+
+enum ClaimStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum ClaimEvidenceType {
+  DESCRIPTION
+  IMAGE
+  PURCHASE_INFO
+  IDENTIFYING_DETAIL
+}
+
+enum MatchStatus {
+  SUGGESTED
+  CONFIRMED
+  DISMISSED
+}
+
+enum NotificationType {
+  MATCH_FOUND
+  CLAIM_SUBMITTED
+  CLAIM_ACCEPTED
+  CLAIM_REJECTED
+  NEW_MESSAGE
+  ITEM_RESOLVED
+}
+
+enum ReportReason {
+  SPAM
+  FAKE_LISTING
+  INAPPROPRIATE_CONTENT
+  INCORRECT_INFORMATION
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  DISMISSED
+  ACTIONED
+}
+
+enum ModerationActionType {
+  WARN_USER
+  HIDE_ITEM
+  SUSPEND_USER
+  DISMISS_REPORT
+}
+
+model Campus {
+  id        String     @id @default(cuid())
+  name      String
+  domain    String?    @unique
+  locations Location[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Location {
+  id        String   @id @default(cuid())
+  campusId  String
+  campus    Campus   @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  name      String
+  building  String?
+  latitude  Float?
+  longitude Float?
+  items     Item[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([campusId])
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  items     Item[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  passwordHash String
+  role        Role     @default(STUDENT)
+  avatarUrl   String?
+  isVerified  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items                Item[]
+  claims               Claim[]
+  refreshTokens        RefreshToken[]
+  notifications        Notification[]
+  reportsFiled         Report[]              @relation("ReportsFiled")
+  moderationActions    ModerationAction[]    @relation("ModerationActionsTaken")
+  auditLogs            AuditLog[]            @relation("AuditLogsActed")
+  conversationMemberships ConversationParticipant[]
+  messages             Message[]
+
+  @@index([email])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model Item {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId  String
+  category    Category   @relation(fields: [categoryId], references: [id])
+  locationId  String
+  location    Location   @relation(fields: [locationId], references: [id])
+
+  type        ItemType
+  title       String
+  description String
+  status      ItemStatus @default(ACTIVE)
+  eventDate   DateTime
+
+  images      ItemImage[]
+  claims      Claim[]
+  reports     Report[]
+  lostMatches  Match[] @relation("LostItemMatches")
+  foundMatches Match[] @relation("FoundItemMatches")
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([type])
+  @@index([status])
+  @@index([categoryId])
+  @@index([locationId])
+  @@index([eventDate])
+  @@index([createdAt])
+}
+
+model ItemImage {
+  id         String   @id @default(cuid())
+  itemId     String
+  item       Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  url        String
+  storageKey String
+  position   Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([itemId])
+}
+
+model Claim {
+  id          String      @id @default(cuid())
+  itemId      String
+  item        Item        @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  claimantId  String
+  claimant    User        @relation(fields: [claimantId], references: [id], onDelete: Cascade)
+  status      ClaimStatus @default(PENDING)
+  message     String
+
+  evidence      ClaimEvidence[]
+  conversation  Conversation?
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([itemId])
+  @@index([claimantId])
+  @@index([status])
+}
+
+model ClaimEvidence {
+  id        String            @id @default(cuid())
+  claimId   String
+  claim     Claim             @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  type      ClaimEvidenceType
+  content   String
+  createdAt DateTime          @default(now())
+
+  @@index([claimId])
+}
+
+model Match {
+  id          String      @id @default(cuid())
+  lostItemId  String
+  lostItem    Item        @relation("LostItemMatches", fields: [lostItemId], references: [id], onDelete: Cascade)
+  foundItemId String
+  foundItem   Item        @relation("FoundItemMatches", fields: [foundItemId], references: [id], onDelete: Cascade)
+  score       Float
+  status      MatchStatus @default(SUGGESTED)
+  createdAt   DateTime    @default(now())
+
+  @@unique([lostItemId, foundItemId])
+  @@index([lostItemId])
+  @@index([foundItemId])
+  @@index([score])
+}
+
+model Conversation {
+  id           String                    @id @default(cuid())
+  claimId      String                    @unique
+  claim        Claim                     @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  participants ConversationParticipant[]
+  messages     Message[]
+  createdAt    DateTime                  @default(now())
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt     DateTime?
+  joinedAt       DateTime     @default(now())
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  body           String
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  metadata  Json?
+  createdAt DateTime         @default(now())
+
+  @@index([userId])
+  @@index([read])
+}
+
+model Report {
+  id           String       @id @default(cuid())
+  reporterId   String
+  reporter     User         @relation("ReportsFiled", fields: [reporterId], references: [id], onDelete: Cascade)
+  itemId       String
+  item         Item         @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  reason       ReportReason
+  description  String?
+  status       ReportStatus @default(PENDING)
+  reviewedById String?
+  reviewedAt   DateTime?
+
+  moderationActions ModerationAction[]
+
+  createdAt    DateTime     @default(now())
+
+  @@index([itemId])
+  @@index([status])
+}
+
+model ModerationAction {
+  id         String                @id @default(cuid())
+  reportId   String?
+  report     Report?               @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  moderatorId String
+  moderator  User                  @relation("ModerationActionsTaken", fields: [moderatorId], references: [id], onDelete: Cascade)
+  action     ModerationActionType
+  metadata   Json?
+  createdAt  DateTime              @default(now())
+
+  @@index([reportId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation("AuditLogsActed", fields: [actorId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+}

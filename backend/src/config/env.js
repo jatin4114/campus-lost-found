@@ -1,6 +1,6 @@
 import 'dotenv/config'
 
-const required = []
+const required = ['DATABASE_URL']
 
 for (const key of required) {
   if (!process.env[key]) {
