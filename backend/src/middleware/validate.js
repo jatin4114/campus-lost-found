@@ -11,7 +11,10 @@ export function validate(schema) {
       return next(new ApiError(400, 'VALIDATION_ERROR', message))
     }
     if (result.data.body) req.body = result.data.body
-    if (result.data.query) req.query = result.data.query
+    // req.query is a read-only getter in Express 5; stash parsed/coerced
+    // query params separately instead of reassigning it.
+    if (result.data.query) req.parsedQuery = result.data.query
+    if (result.data.params) req.parsedParams = result.data.params
     next()
   }
 }
