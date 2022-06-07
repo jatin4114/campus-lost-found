@@ -22,6 +22,7 @@ export function Navbar() {
               <Link to="/dashboard" className="hover:text-slate-900">Dashboard</Link>
               <Link to="/items" className="hover:text-slate-900">Browse</Link>
               <Link to="/report" className="hover:text-slate-900">Report Item</Link>
+              <Link to="/my-reports" className="hover:text-slate-900">My Reports</Link>
               <span className="text-slate-400">{user?.name}</span>
               <button
                 type="button"

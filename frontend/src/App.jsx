@@ -7,6 +7,10 @@ import { LoginPage } from './pages/auth/LoginPage'
 import { RegisterPage } from './pages/auth/RegisterPage'
 import { VerifyEmailPage } from './pages/auth/VerifyEmailPage'
 import { DashboardPage } from './pages/dashboard/DashboardPage'
+import { ItemDetailPage } from './pages/items/ItemDetailPage'
+import { ItemsPage } from './pages/items/ItemsPage'
+import { MyReportsPage } from './pages/items/MyReportsPage'
+import { ReportItemPage } from './pages/items/ReportItemPage'
 import { LandingPage } from './pages/LandingPage'
 
 const queryClient = new QueryClient()
@@ -22,8 +26,12 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/verify-email" element={<VerifyEmailPage />} />
+              <Route path="/items" element={<ItemsPage />} />
+              <Route path="/items/:id" element={<ItemDetailPage />} />
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/report" element={<ReportItemPage />} />
+                <Route path="/my-reports" element={<MyReportsPage />} />
               </Route>
             </Route>
           </Routes>
