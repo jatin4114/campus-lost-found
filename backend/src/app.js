@@ -9,6 +9,7 @@ import { categoryRouter } from './routes/categories.js'
 import { healthRouter } from './routes/health.js'
 import { itemRouter } from './routes/items.js'
 import { locationRouter } from './routes/locations.js'
+import { UPLOAD_DIR } from './services/storageService.js'
 
 export function createApp() {
   const app = express()
@@ -17,6 +18,7 @@ export function createApp() {
   app.use(cors({ origin: env.corsOrigin, credentials: true }))
   app.use(express.json())
   app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'))
+  app.use('/uploads', express.static(UPLOAD_DIR))
 
   app.use('/api/v1/health', healthRouter)
   app.use('/api/v1/auth', authRouter)
