@@ -7,6 +7,7 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import { authRouter } from './routes/auth.js'
 import { categoryRouter } from './routes/categories.js'
 import { healthRouter } from './routes/health.js'
+import { claimRouter } from './routes/claims.js'
 import { itemRouter } from './routes/items.js'
 import { locationRouter } from './routes/locations.js'
 import { UPLOAD_DIR } from './services/storageService.js'
@@ -25,6 +26,7 @@ export function createApp() {
   app.use('/api/v1/categories', categoryRouter)
   app.use('/api/v1/locations', locationRouter)
   app.use('/api/v1/items', itemRouter)
+  app.use('/api/v1/claims', claimRouter)
 
   app.use(notFoundHandler)
   app.use(errorHandler)

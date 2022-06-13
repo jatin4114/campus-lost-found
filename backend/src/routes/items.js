@@ -1,9 +1,11 @@
 import { Router } from 'express'
+import * as claimController from '../controllers/claimController.js'
 import * as itemController from '../controllers/itemController.js'
 import * as itemImageController from '../controllers/itemImageController.js'
 import { requireAuth } from '../middleware/auth.js'
 import { uploadItemImages } from '../middleware/upload.js'
 import { validate } from '../middleware/validate.js'
+import { createClaimSchema } from '../validators/claimValidators.js'
 import {
   createItemSchema,
   itemIdParamSchema,
@@ -22,3 +24,5 @@ itemRouter.delete('/:id', requireAuth, validate(itemIdParamSchema), itemControll
 
 itemRouter.post('/:id/images', requireAuth, uploadItemImages, itemImageController.addImages)
 itemRouter.delete('/:id/images/:imageId', requireAuth, itemImageController.removeImage)
+
+itemRouter.post('/:itemId/claims', requireAuth, validate(createClaimSchema), claimController.create)
