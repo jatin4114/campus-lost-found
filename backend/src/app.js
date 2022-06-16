@@ -10,6 +10,7 @@ import { healthRouter } from './routes/health.js'
 import { claimRouter } from './routes/claims.js'
 import { itemRouter } from './routes/items.js'
 import { locationRouter } from './routes/locations.js'
+import { matchRouter } from './routes/matches.js'
 import { UPLOAD_DIR } from './services/storageService.js'
 
 export function createApp() {
@@ -27,6 +28,7 @@ export function createApp() {
   app.use('/api/v1/locations', locationRouter)
   app.use('/api/v1/items', itemRouter)
   app.use('/api/v1/claims', claimRouter)
+  app.use('/api/v1/matches', matchRouter)
 
   app.use(notFoundHandler)
   app.use(errorHandler)

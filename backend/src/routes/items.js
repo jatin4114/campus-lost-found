@@ -2,6 +2,7 @@ import { Router } from 'express'
 import * as claimController from '../controllers/claimController.js'
 import * as itemController from '../controllers/itemController.js'
 import * as itemImageController from '../controllers/itemImageController.js'
+import * as matchController from '../controllers/matchController.js'
 import { requireAuth } from '../middleware/auth.js'
 import { uploadItemImages } from '../middleware/upload.js'
 import { validate } from '../middleware/validate.js'
@@ -26,3 +27,5 @@ itemRouter.post('/:id/images', requireAuth, uploadItemImages, itemImageControlle
 itemRouter.delete('/:id/images/:imageId', requireAuth, itemImageController.removeImage)
 
 itemRouter.post('/:itemId/claims', requireAuth, validate(createClaimSchema), claimController.create)
+
+itemRouter.get('/:id/matches', requireAuth, matchController.forItem)

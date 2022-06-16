@@ -1,10 +1,17 @@
 import { ApiError } from '../middleware/errorHandler.js'
 import * as itemRepo from '../repositories/itemRepository.js'
+import { generateMatchesForItem } from './matchingService.js'
 
 const UNEDITABLE_STATUSES = new Set(['CLAIMED', 'RESOLVED'])
 
 export async function createItem(userId, payload) {
-  return itemRepo.create({ ...payload, userId })
+  const item = await itemRepo.create({ ...payload, userId })
+  // Matching runs against same-category active items and is cheap at this
+  // scale; if the candidate set grows large this should move to a queue.
+  await generateMatchesForItem(item).catch((err) => {
+    console.error('Match generation failed for item', item.id, err)
+  })
+  return item
 }
 
 export async function getItem(id) {
