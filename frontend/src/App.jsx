@@ -12,6 +12,7 @@ import { ItemsPage } from './pages/items/ItemsPage'
 import { MyReportsPage } from './pages/items/MyReportsPage'
 import { ReportItemPage } from './pages/items/ReportItemPage'
 import { LandingPage } from './pages/LandingPage'
+import { MatchesPage } from './pages/MatchesPage'
 
 const queryClient = new QueryClient()
 
@@ -32,6 +33,7 @@ function App() {
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/report" element={<ReportItemPage />} />
                 <Route path="/my-reports" element={<MyReportsPage />} />
+                <Route path="/matches" element={<MatchesPage />} />
               </Route>
             </Route>
           </Routes>
