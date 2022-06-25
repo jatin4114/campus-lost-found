@@ -1,7 +1,8 @@
 import { ApiError } from '../middleware/errorHandler.js'
 import * as itemRepo from '../repositories/itemRepository.js'
 import * as matchRepo from '../repositories/matchRepository.js'
-import { scoreMatch, tierForScore } from './matching/scoring.js'
+import { scoreMatch, tierForScore, MATCH_TIERS } from './matching/scoring.js'
+import { notify } from './notificationService.js'
 
 const MIN_SCORE_TO_PERSIST = 40
 
@@ -23,6 +24,15 @@ export async function generateMatchesForItem(item) {
     if (score >= MIN_SCORE_TO_PERSIST) {
       const match = await matchRepo.upsert({ lostItemId: lostItem.id, foundItemId: foundItem.id, score })
       results.push({ ...match, tier: tierForScore(score) })
+
+      if (score >= MATCH_TIERS.POSSIBLE) {
+        await notify(candidate.userId, {
+          type: 'MATCH_FOUND',
+          title: 'Someone found an item matching your report',
+          message: `"${item.title}" may match your report "${candidate.title}" (${score}% match).`,
+          metadata: { matchId: match.id, itemId: item.id },
+        })
+      }
     }
   }
 

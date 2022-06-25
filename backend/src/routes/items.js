@@ -27,5 +27,6 @@ itemRouter.post('/:id/images', requireAuth, uploadItemImages, itemImageControlle
 itemRouter.delete('/:id/images/:imageId', requireAuth, itemImageController.removeImage)
 
 itemRouter.post('/:itemId/claims', requireAuth, validate(createClaimSchema), claimController.create)
+itemRouter.post('/:id/resolve', requireAuth, claimController.resolve)
 
 itemRouter.get('/:id/matches', requireAuth, matchController.forItem)

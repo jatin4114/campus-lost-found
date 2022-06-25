@@ -11,6 +11,7 @@ import { claimRouter } from './routes/claims.js'
 import { itemRouter } from './routes/items.js'
 import { locationRouter } from './routes/locations.js'
 import { matchRouter } from './routes/matches.js'
+import { notificationRouter } from './routes/notifications.js'
 import { UPLOAD_DIR } from './services/storageService.js'
 
 export function createApp() {
@@ -29,6 +30,7 @@ export function createApp() {
   app.use('/api/v1/items', itemRouter)
   app.use('/api/v1/claims', claimRouter)
   app.use('/api/v1/matches', matchRouter)
+  app.use('/api/v1/notifications', notificationRouter)
 
   app.use(notFoundHandler)
   app.use(errorHandler)

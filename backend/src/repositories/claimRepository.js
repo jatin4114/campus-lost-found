@@ -10,6 +10,10 @@ export function findById(id) {
   return prisma.claim.findUnique({ where: { id }, include: includeDefault })
 }
 
+export function findAcceptedByItem(itemId) {
+  return prisma.claim.findFirst({ where: { itemId, status: 'ACCEPTED' }, include: includeDefault })
+}
+
 export function findPendingByItem(itemId, excludeId) {
   return prisma.claim.findMany({
     where: { itemId, status: 'PENDING', id: excludeId ? { not: excludeId } : undefined },

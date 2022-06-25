@@ -1,6 +1,8 @@
 import { ApiError } from '../middleware/errorHandler.js'
 import * as claimRepo from '../repositories/claimRepository.js'
+import * as itemRepo from '../repositories/itemRepository.js'
 import { getItem } from './itemService.js'
+import { notify } from './notificationService.js'
 
 export async function submitClaim(itemId, claimant, { message, evidence }) {
   const item = await getItem(itemId)
@@ -14,6 +16,14 @@ export async function submitClaim(itemId, claimant, { message, evidence }) {
   }
 
   const { claim } = await claimRepo.createClaim({ itemId, claimantId: claimant.id, message, evidence })
+
+  await notify(item.userId, {
+    type: 'CLAIM_SUBMITTED',
+    title: 'Someone submitted a claim',
+    message: `${claimant.name ?? 'A student'} submitted a claim on "${item.title}".`,
+    metadata: { itemId, claimId: claim.id },
+  })
+
   return claim
 }
 
@@ -45,6 +55,14 @@ export async function acceptClaim(claimId, user) {
   assertPending(claim)
 
   const { claim: accepted, conversation } = await claimRepo.acceptClaim(claimId, claim.itemId)
+
+  await notify(claim.claimantId, {
+    type: 'CLAIM_ACCEPTED',
+    title: 'Your claim was accepted',
+    message: `Your claim on "${claim.item.title}" was accepted. You can now message the owner.`,
+    metadata: { itemId: claim.itemId, claimId, conversationId: conversation.id },
+  })
+
   return { claim: accepted, conversationId: conversation.id }
 }
 
@@ -54,7 +72,16 @@ export async function rejectClaim(claimId, user) {
   assertPending(claim)
 
   const otherPending = await claimRepo.findPendingByItem(claim.itemId, claimId)
-  return claimRepo.rejectClaim(claimId, claim.itemId, otherPending.length === 0)
+  const rejected = await claimRepo.rejectClaim(claimId, claim.itemId, otherPending.length === 0)
+
+  await notify(claim.claimantId, {
+    type: 'CLAIM_REJECTED',
+    title: 'Your claim was rejected',
+    message: `Your claim on "${claim.item.title}" was not accepted.`,
+    metadata: { itemId: claim.itemId, claimId },
+  })
+
+  return rejected
 }
 
 export async function cancelClaim(claimId, user) {
@@ -66,6 +93,35 @@ export async function cancelClaim(claimId, user) {
 
   const otherPending = await claimRepo.findPendingByItem(claim.itemId, claimId)
   return claimRepo.cancelClaim(claimId, claim.itemId, otherPending.length === 0)
+}
+
+export async function resolveItem(itemId, user) {
+  const claim = await claimRepo.findAcceptedByItem(itemId)
+  if (!claim) {
+    throw new ApiError(409, 'ITEM_NOT_RESOLVABLE', 'This item has no accepted claim to resolve.')
+  }
+
+  const isParty = user.id === claim.item.userId || user.id === claim.claimantId
+  const isPrivileged = user.role === 'ADMIN' || user.role === 'MODERATOR'
+  if (!isParty && !isPrivileged) {
+    throw new ApiError(403, 'FORBIDDEN', 'Only the item owner or claimant can mark this resolved.')
+  }
+
+  if (claim.item.status !== 'CLAIMED') {
+    throw new ApiError(409, 'ITEM_NOT_RESOLVABLE', `An item with status ${claim.item.status} cannot be resolved.`)
+  }
+
+  const item = await itemRepo.update(itemId, { status: 'RESOLVED' })
+
+  const otherPartyId = user.id === claim.item.userId ? claim.claimantId : claim.item.userId
+  await notify(otherPartyId, {
+    type: 'ITEM_RESOLVED',
+    title: 'Item marked resolved',
+    message: `"${item.title}" has been marked as resolved.`,
+    metadata: { itemId },
+  })
+
+  return item
 }
 
 export async function getMyClaims(userId) {

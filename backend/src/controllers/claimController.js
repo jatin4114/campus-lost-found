@@ -25,6 +25,11 @@ export async function cancel(req, res) {
   res.json({ success: true, data: { claim } })
 }
 
+export async function resolve(req, res) {
+  const item = await claimService.resolveItem(req.params.id, req.user)
+  res.json({ success: true, data: { item } })
+}
+
 export async function mine(req, res) {
   const claims = await claimService.getMyClaims(req.user.id)
   res.json({ success: true, data: { claims } })
