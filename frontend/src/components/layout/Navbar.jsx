@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { NotificationBell } from './NotificationBell'
 
 export function Navbar() {
   const { user, status, logout } = useAuth()
@@ -24,6 +25,7 @@ export function Navbar() {
               <Link to="/report" className="hover:text-slate-900">Report Item</Link>
               <Link to="/my-reports" className="hover:text-slate-900">My Reports</Link>
               <Link to="/matches" className="hover:text-slate-900">Matches</Link>
+              <NotificationBell />
               <span className="text-slate-400">{user?.name}</span>
               <button
                 type="button"
