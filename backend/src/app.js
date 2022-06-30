@@ -6,6 +6,7 @@ import { env } from './config/env.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import { authRouter } from './routes/auth.js'
 import { categoryRouter } from './routes/categories.js'
+import { conversationRouter } from './routes/conversations.js'
 import { healthRouter } from './routes/health.js'
 import { claimRouter } from './routes/claims.js'
 import { itemRouter } from './routes/items.js'
@@ -31,6 +32,7 @@ export function createApp() {
   app.use('/api/v1/claims', claimRouter)
   app.use('/api/v1/matches', matchRouter)
   app.use('/api/v1/notifications', notificationRouter)
+  app.use('/api/v1/conversations', conversationRouter)
 
   app.use(notFoundHandler)
   app.use(errorHandler)

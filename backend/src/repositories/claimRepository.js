@@ -60,13 +60,13 @@ export async function acceptClaim(claimId, itemId) {
       data: { status: 'REJECTED' },
     })
 
+    await tx.item.update({ where: { id: itemId }, data: { status: 'CLAIMED' } })
+
     const claim = await tx.claim.update({
       where: { id: claimId },
       data: { status: 'ACCEPTED' },
       include: includeDefault,
     })
-
-    await tx.item.update({ where: { id: itemId }, data: { status: 'CLAIMED' } })
 
     const conversation = await tx.conversation.create({
       data: {
