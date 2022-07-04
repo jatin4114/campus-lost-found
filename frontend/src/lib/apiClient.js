@@ -22,6 +22,10 @@ export function loadStoredRefreshToken() {
   return refreshToken
 }
 
+export function getAccessToken() {
+  return accessToken
+}
+
 apiClient.interceptors.request.use((config) => {
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`

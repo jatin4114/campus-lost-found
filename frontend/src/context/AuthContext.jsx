@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { apiClient, loadStoredRefreshToken, setTokens } from '../lib/apiClient'
+import { getSocket } from '../lib/socket'
 
 const AuthContext = createContext(null)
 
@@ -47,6 +48,7 @@ export function AuthProvider({ children }) {
     setTokens(null)
     setUser(null)
     setStatus('anonymous')
+    getSocket().disconnect()
   }
 
   return (

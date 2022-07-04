@@ -25,6 +25,7 @@ export function Navbar() {
               <Link to="/report" className="hover:text-slate-900">Report Item</Link>
               <Link to="/my-reports" className="hover:text-slate-900">My Reports</Link>
               <Link to="/matches" className="hover:text-slate-900">Matches</Link>
+              <Link to="/messages" className="hover:text-slate-900">Messages</Link>
               <NotificationBell />
               <span className="text-slate-400">{user?.name}</span>
               <button

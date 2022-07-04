@@ -13,6 +13,8 @@ import { MyReportsPage } from './pages/items/MyReportsPage'
 import { ReportItemPage } from './pages/items/ReportItemPage'
 import { LandingPage } from './pages/LandingPage'
 import { MatchesPage } from './pages/MatchesPage'
+import { ConversationPage } from './pages/messages/ConversationPage'
+import { MessagesPage } from './pages/messages/MessagesPage'
 import { NotificationsPage } from './pages/NotificationsPage'
 
 const queryClient = new QueryClient()
@@ -36,6 +38,8 @@ function App() {
                 <Route path="/my-reports" element={<MyReportsPage />} />
                 <Route path="/matches" element={<MatchesPage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
+                <Route path="/messages" element={<MessagesPage />} />
+                <Route path="/messages/:conversationId" element={<ConversationPage />} />
               </Route>
             </Route>
           </Routes>
