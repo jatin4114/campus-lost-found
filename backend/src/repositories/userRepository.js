@@ -16,6 +16,14 @@ export function markVerified(id) {
   return prisma.user.update({ where: { id }, data: { isVerified: true } })
 }
 
+export function setActive(id, isActive) {
+  return prisma.user.update({ where: { id }, data: { isActive } })
+}
+
+export function findAll() {
+  return prisma.user.findMany({ orderBy: { createdAt: 'desc' } })
+}
+
 export function toPublicUser(user) {
   const { passwordHash, ...publicUser } = user
   return publicUser

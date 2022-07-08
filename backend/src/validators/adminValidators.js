@@ -1,0 +1,32 @@
+import { z } from 'zod'
+
+export const createCategorySchema = z.object({
+  body: z.object({ name: z.string().trim().min(2).max(60) }),
+})
+
+export const createLocationSchema = z.object({
+  body: z.object({
+    campusId: z.string().min(1),
+    name: z.string().trim().min(2).max(120),
+    building: z.string().trim().max(120).optional(),
+    latitude: z.number().min(-90).max(90).optional(),
+    longitude: z.number().min(-180).max(180).optional(),
+  }),
+})
+
+export const listReportsQuerySchema = z.object({
+  query: z.object({
+    status: z.enum(['PENDING', 'DISMISSED', 'ACTIONED']).optional(),
+  }),
+})
+
+export const paginationQuerySchema = z.object({
+  query: z.object({
+    page: z.coerce.number().int().min(1).optional().default(1),
+    limit: z.coerce.number().int().min(1).max(100).optional().default(20),
+  }),
+})
+
+export const userIdParamSchema = z.object({
+  params: z.object({ id: z.string().min(1) }),
+})

@@ -7,3 +7,7 @@ export function findAll() {
 export function findById(id) {
   return prisma.location.findUnique({ where: { id } })
 }
+
+export function create({ campusId, name, building, latitude, longitude }) {
+  return prisma.location.create({ data: { campusId, name, building, latitude, longitude } })
+}
