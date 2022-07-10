@@ -27,6 +27,9 @@ export function Navbar() {
               <Link to="/matches" className="hover:text-slate-900">Matches</Link>
               <Link to="/messages" className="hover:text-slate-900">Messages</Link>
               <NotificationBell />
+              {(user?.role === 'ADMIN' || user?.role === 'MODERATOR') && (
+                <Link to="/admin" className="hover:text-slate-900">Admin</Link>
+              )}
               <span className="text-slate-400">{user?.name}</span>
               <button
                 type="button"

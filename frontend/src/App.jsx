@@ -1,8 +1,14 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from './components/common/ProtectedRoute'
+import { RequireRole } from './components/common/RequireRole'
+import { AdminLayout } from './components/layout/AdminLayout'
 import { AppLayout } from './components/layout/AppLayout'
 import { AuthProvider } from './context/AuthContext'
+import { AdminAuditLogsPage } from './pages/admin/AdminAuditLogsPage'
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage'
+import { AdminReportsPage } from './pages/admin/AdminReportsPage'
+import { AdminUsersPage } from './pages/admin/AdminUsersPage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { RegisterPage } from './pages/auth/RegisterPage'
 import { VerifyEmailPage } from './pages/auth/VerifyEmailPage'
@@ -40,6 +46,14 @@ function App() {
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/messages" element={<MessagesPage />} />
                 <Route path="/messages/:conversationId" element={<ConversationPage />} />
+                <Route element={<RequireRole roles={['ADMIN', 'MODERATOR']} />}>
+                  <Route path="/admin" element={<AdminLayout />}>
+                    <Route index element={<AdminDashboardPage />} />
+                    <Route path="users" element={<AdminUsersPage />} />
+                    <Route path="reports" element={<AdminReportsPage />} />
+                    <Route path="audit-logs" element={<AdminAuditLogsPage />} />
+                  </Route>
+                </Route>
               </Route>
             </Route>
           </Routes>
