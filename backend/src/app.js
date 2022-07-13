@@ -13,6 +13,7 @@ import { claimRouter } from './routes/claims.js'
 import { itemRouter } from './routes/items.js'
 import { locationRouter } from './routes/locations.js'
 import { matchRouter } from './routes/matches.js'
+import { apiRateLimiter } from './middleware/rateLimit.js'
 import { reportRouter } from './routes/reports.js'
 import { notificationRouter } from './routes/notifications.js'
 import { UPLOAD_DIR } from './services/storageService.js'
@@ -24,6 +25,7 @@ export function createApp() {
   app.use(cors({ origin: env.corsOrigin, credentials: true }))
   app.use(express.json())
   app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'))
+  app.use('/api', apiRateLimiter)
   app.use('/uploads', express.static(UPLOAD_DIR))
 
   app.use('/api/v1/health', healthRouter)
