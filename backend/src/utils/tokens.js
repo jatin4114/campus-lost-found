@@ -13,7 +13,10 @@ export function verifyAccessToken(token) {
 }
 
 export function signRefreshToken(user) {
-  return jwt.sign({ sub: user.id }, env.jwt.refreshSecret, {
+  // jti makes two tokens minted for the same user within the same second
+  // (jwt `iat` has second granularity) distinct — without it they'd be
+  // byte-identical and collide on the tokenHash unique constraint.
+  return jwt.sign({ sub: user.id, jti: crypto.randomUUID() }, env.jwt.refreshSecret, {
     expiresIn: env.jwt.refreshTtl,
   })
 }
