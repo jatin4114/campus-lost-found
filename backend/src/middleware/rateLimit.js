@@ -1,4 +1,5 @@
 import rateLimit from 'express-rate-limit'
+import { env } from '../config/env.js'
 
 function limiter(windowMs, limit) {
   return rateLimit({
@@ -6,6 +7,9 @@ function limiter(windowMs, limit) {
     limit,
     standardHeaders: true,
     legacyHeaders: false,
+    // Rate limiting is a production concern; the test suite creates many
+    // users/items per run and shouldn't have to work around it.
+    skip: () => env.nodeEnv === 'test',
     message: {
       success: false,
       error: { code: 'RATE_LIMITED', message: 'Too many attempts. Please try again later.' },
