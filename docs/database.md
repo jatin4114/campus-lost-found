@@ -51,3 +51,20 @@ Indexes are added for the columns the item-discovery and moderation
 endpoints filter/sort on: `Item.type`, `Item.status`, `Item.categoryId`,
 `Item.locationId`, `Item.eventDate`, `Item.createdAt`, `User.email`
 (unique), `Claim.status`, `Notification.userId`, `Message.conversationId`.
+
+Checked with `EXPLAIN ANALYZE` against the item-search query
+(`type`/`status`/`categoryId` filter + `createdAt` sort) — at seed-data scale
+(~25 rows) Postgres's planner correctly picks a sequential scan over the
+indexes, since scanning a 25-row table is cheaper than an index lookup. That's
+expected planner behavior, not a missing index; the indexes exist so the
+planner switches to using them automatically once the table has enough rows
+that a full scan stops being the cheaper plan — no code or schema change
+needed when that happens.
+
+## Avoiding N+1 queries
+
+Every repository that returns related data (an item with its category/
+location/images/owner, a claim with its evidence/claimant, a match with both
+items) uses a single Prisma query with `include`, not a query-per-related-row
+loop. `itemRepository.search` similarly runs one `findMany` + one `count` in
+parallel rather than counting per page.
