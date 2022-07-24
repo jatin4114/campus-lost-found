@@ -37,7 +37,7 @@ export async function getMessages(conversationId, userId) {
 }
 
 export async function sendMessage(conversationId, senderId, body) {
-  const membership = await assertParticipant(conversationId, senderId)
+  await assertParticipant(conversationId, senderId)
   const message = await messageRepo.create({ conversationId, senderId, body })
 
   const conversation = await conversationRepo.findById(conversationId)

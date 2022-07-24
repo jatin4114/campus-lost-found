@@ -25,6 +25,7 @@ export function findAll() {
 }
 
 export function toPublicUser(user) {
-  const { passwordHash, ...publicUser } = user
+  // eslint-disable-next-line no-unused-vars -- destructuring strips passwordHash
+  const { passwordHash: _passwordHash, ...publicUser } = user
   return publicUser
 }
