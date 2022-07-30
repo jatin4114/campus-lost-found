@@ -1,0 +1,689 @@
+openapi: 3.0.3
+info:
+  title: CampusFind API
+  version: "1.0.0"
+  description: >
+    Campus Lost & Found platform API. All responses use a consistent
+    envelope: `{"success": true, "data": ...}` or
+    `{"success": false, "error": {"code": ..., "message": ...}}`.
+servers:
+  - url: http://localhost:4000/api/v1
+    description: Local development
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        error:
+          type: object
+          properties:
+            code: { type: string, example: ITEM_NOT_FOUND }
+            message: { type: string }
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        role: { type: string, enum: [STUDENT, MODERATOR, ADMIN] }
+        isVerified: { type: boolean }
+        isActive: { type: boolean }
+    Item:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string, enum: [LOST, FOUND] }
+        title: { type: string }
+        description: { type: string }
+        status:
+          type: string
+          enum: [ACTIVE, CLAIM_PENDING, CLAIMED, RESOLVED, EXPIRED]
+        eventDate: { type: string, format: date-time }
+        categoryId: { type: string }
+        locationId: { type: string }
+    Claim:
+      type: object
+      properties:
+        id: { type: string }
+        itemId: { type: string }
+        claimantId: { type: string }
+        status: { type: string, enum: [PENDING, ACCEPTED, REJECTED, CANCELLED] }
+        message: { type: string }
+    Match:
+      type: object
+      properties:
+        id: { type: string }
+        lostItemId: { type: string }
+        foundItemId: { type: string }
+        score: { type: number }
+        tier: { type: string, enum: [VERY_STRONG, STRONG, POSSIBLE, WEAK] }
+    Notification:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string }
+        title: { type: string }
+        message: { type: string }
+        read: { type: boolean }
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Missing or invalid access token
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: Authenticated but not permitted
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+security:
+  - bearerAuth: []
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      security: []
+      responses:
+        '200': { description: OK }
+
+  /auth/register:
+    post:
+      summary: Register a new account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name: { type: string }
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '201': { description: Registered — check email to verify }
+        '409': { description: Email already registered }
+
+  /auth/login:
+    post:
+      summary: Log in
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: Access + refresh tokens and the user
+        '401': { description: Invalid credentials }
+        '403': { description: Email not verified or account deactivated }
+
+  /auth/refresh:
+    post:
+      summary: Rotate a refresh token for a new access/refresh pair
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string }
+      responses:
+        '200': { description: New token pair }
+        '401': { description: Invalid/expired/reused refresh token }
+
+  /auth/logout:
+    post:
+      summary: Revoke a refresh token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string }
+      responses:
+        '200': { description: Logged out }
+
+  /auth/verify-email:
+    post:
+      summary: Verify an email address using the token sent at registration
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        '200': { description: Verified }
+        '400': { description: Invalid/expired token }
+
+  /auth/me:
+    get:
+      summary: Get the current authenticated user
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      user: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /categories:
+    get:
+      summary: List all item categories
+      security: []
+      responses:
+        '200': { description: Categories }
+
+  /locations:
+    get:
+      summary: List all campus locations
+      security: []
+      responses:
+        '200': { description: Locations }
+
+  /items:
+    get:
+      summary: Search/browse items with filters and pagination
+      security: []
+      parameters:
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: type
+          schema: { type: string, enum: [LOST, FOUND] }
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: location
+          schema: { type: string }
+        - in: query
+          name: status
+          schema: { type: string }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: Paginated items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Item' }
+                  pagination:
+                    type: object
+                    properties:
+                      page: { type: integer }
+                      limit: { type: integer }
+                      total: { type: integer }
+                      totalPages: { type: integer }
+    post:
+      summary: Report a lost or found item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, title, description, categoryId, locationId, eventDate]
+              properties:
+                type: { type: string, enum: [LOST, FOUND] }
+                title: { type: string }
+                description: { type: string }
+                categoryId: { type: string }
+                locationId: { type: string }
+                eventDate: { type: string, format: date }
+      responses:
+        '201': { description: Created }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /items/mine:
+    get:
+      summary: List the current user's own reported items
+      responses:
+        '200': { description: Items }
+
+  /items/{id}:
+    get:
+      summary: Get one item
+      security: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Item }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      summary: Update an item (owner or moderator/admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Updated }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { description: Item not editable in its current status }
+    delete:
+      summary: Delete an item (owner or moderator/admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /items/{id}/images:
+    post:
+      summary: Upload up to 5 images for an item (owner only, JPEG/PNG/WebP, 5MB max each)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                images:
+                  type: array
+                  items: { type: string, format: binary }
+      responses:
+        '201': { description: Uploaded }
+        '400': { description: Invalid file type/size or too many images }
+
+  /items/{id}/images/{imageId}:
+    delete:
+      summary: Delete one of an item's images (owner only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: path
+          name: imageId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Deleted }
+
+  /items/{itemId}/claims:
+    post:
+      summary: Submit a claim on an item, with required evidence
+      parameters:
+        - in: path
+          name: itemId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message, evidence]
+              properties:
+                message: { type: string }
+                evidence:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum: [DESCRIPTION, IMAGE, PURCHASE_INFO, IDENTIFYING_DETAIL]
+                      content: { type: string }
+      responses:
+        '201': { description: Claim submitted, item moves to CLAIM_PENDING }
+        '400': { description: Cannot claim your own item, or missing evidence }
+        '409': { description: Item is not ACTIVE }
+
+  /items/{id}/matches:
+    get:
+      summary: List potential matches for an item
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Matches
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      matches:
+                        type: array
+                        items: { $ref: '#/components/schemas/Match' }
+
+  /items/{id}/resolve:
+    post:
+      summary: Mark a CLAIMED item RESOLVED (item owner or accepted claimant)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Resolved }
+        '409': { description: No accepted claim to resolve, or wrong status }
+
+  /claims/mine:
+    get:
+      summary: List claims the current user has submitted
+      responses:
+        '200': { description: Claims }
+
+  /claims/on-my-items:
+    get:
+      summary: List claims submitted on the current user's items
+      responses:
+        '200': { description: Claims }
+
+  /claims/{id}:
+    get:
+      summary: Get one claim
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Claim }
+
+  /claims/{id}/accept:
+    post:
+      summary: Accept a pending claim (item owner only) — creates a Conversation
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Accepted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { description: Claim is not PENDING }
+
+  /claims/{id}/reject:
+    post:
+      summary: Reject a pending claim (item owner only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Rejected }
+
+  /claims/{id}/cancel:
+    post:
+      summary: Cancel your own pending claim
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Cancelled }
+
+  /matches/mine:
+    get:
+      summary: List potential matches across all of the current user's items
+      responses:
+        '200': { description: Matches }
+
+  /matches/{id}/dismiss:
+    post:
+      summary: Dismiss a suggested match ("not a match")
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Dismissed }
+
+  /notifications:
+    get:
+      summary: List the current user's notifications, with unread count
+      responses:
+        '200': { description: Notifications }
+
+  /notifications/read-all:
+    post:
+      summary: Mark all notifications read
+      responses:
+        '200': { description: Done }
+
+  /notifications/{id}/read:
+    post:
+      summary: Mark one notification read
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Done }
+
+  /conversations:
+    get:
+      summary: List the current user's conversations, with unread counts
+      responses:
+        '200': { description: Conversations }
+
+  /conversations/{id}/messages:
+    get:
+      summary: Get message history for a conversation (must be a participant)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Messages }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /conversations/{id}/read:
+    post:
+      summary: Mark a conversation read
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Done }
+
+  /reports:
+    post:
+      summary: Report an item for moderation review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId, reason]
+              properties:
+                itemId: { type: string }
+                reason:
+                  type: string
+                  enum: [SPAM, FAKE_LISTING, INAPPROPRIATE_CONTENT, INCORRECT_INFORMATION, OTHER]
+                description: { type: string }
+      responses:
+        '201': { description: Report filed }
+
+  /admin/stats:
+    get:
+      summary: Dashboard stats (ADMIN/MODERATOR)
+      responses:
+        '200': { description: Stats }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/users:
+    get:
+      summary: List all users (ADMIN)
+      responses:
+        '200': { description: Users }
+
+  /admin/users/{id}/suspend:
+    post:
+      summary: Deactivate a user account (ADMIN)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Suspended }
+
+  /admin/users/{id}/reactivate:
+    post:
+      summary: Reactivate a user account (ADMIN)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Reactivated }
+
+  /admin/reports:
+    get:
+      summary: List moderation reports (ADMIN/MODERATOR)
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string, enum: [PENDING, DISMISSED, ACTIONED] }
+      responses:
+        '200': { description: Reports }
+
+  /admin/reports/{id}/review:
+    post:
+      summary: Review a report (ADMIN/MODERATOR)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [DISMISS_REPORT, HIDE_ITEM, WARN_USER, SUSPEND_USER]
+      responses:
+        '200': { description: Reviewed }
+        '409': { description: Report already reviewed }
+
+  /admin/categories:
+    post:
+      summary: Create a category (ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        '201': { description: Created }
+
+  /admin/locations:
+    post:
+      summary: Create a campus location (ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [campusId, name]
+              properties:
+                campusId: { type: string }
+                name: { type: string }
+                building: { type: string }
+                latitude: { type: number }
+                longitude: { type: number }
+      responses:
+        '201': { description: Created }
+
+  /admin/audit-logs:
+    get:
+      summary: List audit log entries, paginated (ADMIN)
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+      responses:
+        '200': { description: Audit logs }

@@ -1,7 +1,11 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import cors from 'cors'
 import express from 'express'
 import helmet from 'helmet'
 import morgan from 'morgan'
+import swaggerUi from 'swagger-ui-express'
+import YAML from 'yamljs'
 import { env } from './config/env.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import { adminRouter } from './routes/admin.js'
@@ -18,6 +22,9 @@ import { reportRouter } from './routes/reports.js'
 import { notificationRouter } from './routes/notifications.js'
 import { UPLOAD_DIR } from './services/storageService.js'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const openApiSpec = YAML.load(path.join(__dirname, '..', 'openapi.yaml'))
+
 export function createApp() {
   const app = express()
 
@@ -27,6 +34,7 @@ export function createApp() {
   app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'))
   app.use('/api', apiRateLimiter)
   app.use('/uploads', express.static(UPLOAD_DIR))
+  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec))
 
   app.use('/api/v1/health', healthRouter)
   app.use('/api/v1/auth', authRouter)
