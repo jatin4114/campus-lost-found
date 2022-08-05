@@ -3,11 +3,14 @@ import { ApiError } from '../middleware/errorHandler.js'
 import * as refreshTokenRepo from '../repositories/refreshTokenRepository.js'
 import * as userRepo from '../repositories/userRepository.js'
 import { env } from '../config/env.js'
-import { sendVerificationEmail } from './emailService.js'
+import { sendPasswordResetEmail, sendVerificationEmail } from './emailService.js'
 import {
+  decodePasswordResetToken,
   hashToken,
+  passwordResetTokenMatchesCurrentHash,
   signAccessToken,
   signEmailVerificationToken,
+  signPasswordResetToken,
   signRefreshToken,
   verifyEmailVerificationToken,
   verifyRefreshToken,
@@ -106,4 +109,33 @@ export async function verifyEmail({ token }) {
 
   const updated = await userRepo.markVerified(user.id)
   return userRepo.toPublicUser(updated)
+}
+
+export async function forgotPassword({ email }) {
+  const user = await userRepo.findByEmail(email)
+  // Always report success — never reveal whether an email is registered.
+  if (!user) return
+
+  const token = signPasswordResetToken(user)
+  await sendPasswordResetEmail(user, token)
+}
+
+export async function resetPassword({ token, password }) {
+  let payload
+  try {
+    payload = decodePasswordResetToken(token)
+  } catch {
+    throw new ApiError(400, 'INVALID_RESET_TOKEN', 'This reset link is invalid or has expired.')
+  }
+
+  const user = await userRepo.findById(payload.sub)
+  if (!user || !passwordResetTokenMatchesCurrentHash(payload, user.passwordHash)) {
+    throw new ApiError(400, 'INVALID_RESET_TOKEN', 'This reset link is invalid or has expired.')
+  }
+
+  const passwordHash = await argon2.hash(password)
+  await userRepo.updatePassword(user.id, passwordHash)
+  // Force re-login everywhere — a leaked-then-reset password shouldn't leave
+  // old sessions alive.
+  await refreshTokenRepo.revokeAllForUser(user.id)
 }

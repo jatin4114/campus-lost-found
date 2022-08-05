@@ -18,3 +18,10 @@ export function revokeByHash(tokenHash) {
     data: { revokedAt: new Date() },
   })
 }
+
+export function revokeAllForUser(userId) {
+  return prisma.refreshToken.updateMany({
+    where: { userId, revokedAt: null },
+    data: { revokedAt: new Date() },
+  })
+}

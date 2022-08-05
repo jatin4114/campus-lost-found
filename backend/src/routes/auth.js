@@ -4,9 +4,11 @@ import { requireAuth } from '../middleware/auth.js'
 import { authRateLimiter } from '../middleware/rateLimit.js'
 import { validate } from '../middleware/validate.js'
 import {
+  forgotPasswordSchema,
   loginSchema,
   refreshSchema,
   registerSchema,
+  resetPasswordSchema,
   verifyEmailSchema,
 } from '../validators/authValidators.js'
 
@@ -17,4 +19,6 @@ authRouter.post('/login', authRateLimiter, validate(loginSchema), authController
 authRouter.post('/refresh', validate(refreshSchema), authController.refresh)
 authRouter.post('/logout', validate(refreshSchema), authController.logout)
 authRouter.post('/verify-email', validate(verifyEmailSchema), authController.verifyEmail)
+authRouter.post('/forgot-password', authRateLimiter, validate(forgotPasswordSchema), authController.forgotPassword)
+authRouter.post('/reset-password', authRateLimiter, validate(resetPasswordSchema), authController.resetPassword)
 authRouter.get('/me', requireAuth, authController.me)

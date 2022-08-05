@@ -16,6 +16,10 @@ export function markVerified(id) {
   return prisma.user.update({ where: { id }, data: { isVerified: true } })
 }
 
+export function updatePassword(id, passwordHash) {
+  return prisma.user.update({ where: { id }, data: { passwordHash } })
+}
+
 export function setActive(id, isActive) {
   return prisma.user.update({ where: { id }, data: { isActive } })
 }

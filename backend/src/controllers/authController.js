@@ -26,6 +26,16 @@ export async function verifyEmail(req, res) {
   res.json({ success: true, data: { user } })
 }
 
+export async function forgotPassword(req, res) {
+  await authService.forgotPassword(req.body)
+  res.json({ success: true, data: null })
+}
+
+export async function resetPassword(req, res) {
+  await authService.resetPassword(req.body)
+  res.json({ success: true, data: null })
+}
+
 export async function me(req, res) {
   const user = await userRepo.findById(req.user.id)
   res.json({ success: true, data: { user: userRepo.toPublicUser(user) } })
