@@ -70,6 +70,11 @@ export function LoginPage() {
           Sign up
         </Link>
       </p>
+      <p className="mt-2 text-sm text-slate-600">
+        <Link to="/forgot-password" className="font-medium text-slate-900 underline">
+          Forgot password?
+        </Link>
+      </p>
     </div>
   )
 }
