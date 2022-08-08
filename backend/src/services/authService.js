@@ -48,9 +48,22 @@ export async function login({ email, password }) {
     throw new ApiError(401, 'INVALID_CREDENTIALS', 'Incorrect email or password.')
   }
 
+  if (user.lockedUntil && user.lockedUntil > new Date()) {
+    throw new ApiError(
+      423,
+      'ACCOUNT_LOCKED',
+      'Too many failed login attempts. Please try again in a few minutes.',
+    )
+  }
+
   const passwordMatches = await argon2.verify(user.passwordHash, password)
   if (!passwordMatches) {
+    await userRepo.recordFailedLogin(user.id, user.failedLoginAttempts)
     throw new ApiError(401, 'INVALID_CREDENTIALS', 'Incorrect email or password.')
+  }
+
+  if (user.failedLoginAttempts > 0 || user.lockedUntil) {
+    await userRepo.clearFailedLogins(user.id)
   }
 
   if (!user.isActive) {
@@ -135,6 +148,7 @@ export async function resetPassword({ token, password }) {
 
   const passwordHash = await argon2.hash(password)
   await userRepo.updatePassword(user.id, passwordHash)
+  await userRepo.clearFailedLogins(user.id)
   // Force re-login everywhere — a leaked-then-reset password shouldn't leave
   // old sessions alive.
   await refreshTokenRepo.revokeAllForUser(user.id)
