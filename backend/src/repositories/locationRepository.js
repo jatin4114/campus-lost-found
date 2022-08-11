@@ -11,3 +11,11 @@ export function findById(id) {
 export function create({ campusId, name, building, latitude, longitude }) {
   return prisma.location.create({ data: { campusId, name, building, latitude, longitude } })
 }
+
+export function update(id, data) {
+  return prisma.location.update({ where: { id }, data })
+}
+
+export function remove(id) {
+  return prisma.location.delete({ where: { id } })
+}

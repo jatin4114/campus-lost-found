@@ -30,3 +30,22 @@ export const paginationQuerySchema = z.object({
 export const userIdParamSchema = z.object({
   params: z.object({ id: z.string().min(1) }),
 })
+
+export const idParamSchema = z.object({
+  params: z.object({ id: z.string().min(1) }),
+})
+
+export const updateCategorySchema = z.object({
+  params: z.object({ id: z.string().min(1) }),
+  body: z.object({ name: z.string().trim().min(2).max(60) }),
+})
+
+export const updateLocationSchema = z.object({
+  params: z.object({ id: z.string().min(1) }),
+  body: z.object({
+    name: z.string().trim().min(2).max(120).optional(),
+    building: z.string().trim().max(120).optional(),
+    latitude: z.number().min(-90).max(90).optional(),
+    longitude: z.number().min(-180).max(180).optional(),
+  }),
+})

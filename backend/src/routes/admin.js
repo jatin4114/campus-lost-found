@@ -5,8 +5,11 @@ import { validate } from '../middleware/validate.js'
 import {
   createCategorySchema,
   createLocationSchema,
+  idParamSchema,
   listReportsQuerySchema,
   paginationQuerySchema,
+  updateCategorySchema,
+  updateLocationSchema,
   userIdParamSchema,
 } from '../validators/adminValidators.js'
 import { reviewReportSchema } from '../validators/reportValidators.js'
@@ -25,6 +28,11 @@ adminRouter.get('/reports', validate(listReportsQuerySchema), adminController.li
 adminRouter.post('/reports/:id/review', validate(reviewReportSchema), adminController.reviewReport)
 
 adminRouter.post('/categories', requireRole('ADMIN'), validate(createCategorySchema), adminController.createCategory)
+adminRouter.put('/categories/:id', requireRole('ADMIN'), validate(updateCategorySchema), adminController.updateCategory)
+adminRouter.delete('/categories/:id', requireRole('ADMIN'), validate(idParamSchema), adminController.deleteCategory)
+
 adminRouter.post('/locations', requireRole('ADMIN'), validate(createLocationSchema), adminController.createLocation)
+adminRouter.put('/locations/:id', requireRole('ADMIN'), validate(updateLocationSchema), adminController.updateLocation)
+adminRouter.delete('/locations/:id', requireRole('ADMIN'), validate(idParamSchema), adminController.deleteLocation)
 
 adminRouter.get('/audit-logs', requireRole('ADMIN'), validate(paginationQuerySchema), adminController.auditLogs)

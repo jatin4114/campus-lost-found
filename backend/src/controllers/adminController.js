@@ -1,9 +1,8 @@
 import * as adminService from '../services/adminService.js'
 import * as auditLogService from '../services/auditLogService.js'
-import * as categoryRepo from '../repositories/categoryRepository.js'
-import * as locationRepo from '../repositories/locationRepository.js'
 import * as moderationService from '../services/moderationService.js'
 import * as reportService from '../services/reportService.js'
+import * as taxonomyService from '../services/taxonomyService.js'
 
 export async function stats(req, res) {
   res.json({ success: true, data: await adminService.getStats() })
@@ -29,13 +28,33 @@ export async function reviewReport(req, res) {
 }
 
 export async function createCategory(req, res) {
-  const category = await categoryRepo.create(req.body.name)
+  const category = await taxonomyService.createCategory(req.body.name)
   res.status(201).json({ success: true, data: { category } })
 }
 
+export async function updateCategory(req, res) {
+  const category = await taxonomyService.updateCategory(req.params.id, req.body.name)
+  res.json({ success: true, data: { category } })
+}
+
+export async function deleteCategory(req, res) {
+  await taxonomyService.deleteCategory(req.params.id)
+  res.json({ success: true, data: null })
+}
+
 export async function createLocation(req, res) {
-  const location = await locationRepo.create(req.body)
+  const location = await taxonomyService.createLocation(req.body)
   res.status(201).json({ success: true, data: { location } })
+}
+
+export async function updateLocation(req, res) {
+  const location = await taxonomyService.updateLocation(req.params.id, req.body)
+  res.json({ success: true, data: { location } })
+}
+
+export async function deleteLocation(req, res) {
+  await taxonomyService.deleteLocation(req.params.id)
+  res.json({ success: true, data: null })
 }
 
 export async function auditLogs(req, res) {
