@@ -1,7 +1,11 @@
 import { Server } from 'socket.io'
 import { env } from '../config/env.js'
 import * as conversationService from '../services/conversationService.js'
+import { createRateLimiter } from '../utils/rateLimiter.js'
 import { verifyAccessToken } from '../utils/tokens.js'
+
+const MAX_MESSAGE_LENGTH = 2000
+const messageRateLimiter = createRateLimiter({ limit: 20, windowMs: 10_000 })
 
 // Tracks how many active sockets each user has open, so presence only flips
 // to "offline" once their last tab/connection disconnects.
@@ -48,8 +52,16 @@ export function initSockets(httpServer) {
     })
 
     socket.on('message:send', async ({ conversationId, body }, callback) => {
+      if (!messageRateLimiter.consume(socket.userId)) {
+        return callback?.({ success: false, error: 'RATE_LIMITED' })
+      }
+
+      if (typeof body !== 'string' || body.trim().length === 0 || body.length > MAX_MESSAGE_LENGTH) {
+        return callback?.({ success: false, error: 'VALIDATION_ERROR' })
+      }
+
       try {
-        const message = await conversationService.sendMessage(conversationId, socket.userId, body)
+        const message = await conversationService.sendMessage(conversationId, socket.userId, body.trim())
         io.to(`conversation:${conversationId}`).emit('message:new', { conversationId, message })
         callback?.({ success: true, message })
       } catch (err) {
