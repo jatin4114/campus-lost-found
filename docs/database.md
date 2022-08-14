@@ -37,6 +37,20 @@ Create a Supabase project, copy its pooled connection string into
 migration history against it. No schema or code changes are required to
 switch — only the connection string.
 
+**Also set `DIRECT_URL`** to Supabase's non-pooled connection string (same host
+minus `-pooler`). Supabase's pooled connection runs in pgbouncer transaction
+mode, which doesn't support the session-level Postgres advisory lock
+`prisma migrate` takes — without `directUrl` in `schema.prisma`, `migrate
+dev`/`migrate deploy` will hang for ~10s and fail with `P1002`. The app
+itself still talks to `DATABASE_URL` (pooled) at runtime; only the Prisma
+CLI uses `DIRECT_URL`.
+
+If a migration ever gets stuck on `P1002` even with `DIRECT_URL` set, an
+earlier interrupted migrate run may have left an idle connection holding the
+advisory lock — check `pg_locks`/`pg_stat_activity` for an idle session and
+terminate it (`SELECT pg_terminate_backend(<pid>)`), or just wait: Supabase
+auto-suspends idle compute after a few minutes, which clears it too.
+
 ## Core entities
 
 `User`, `Campus`, `Location`, `Category`, `Item`, `ItemImage`, `Claim`,

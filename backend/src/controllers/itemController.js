@@ -16,7 +16,7 @@ export async function update(req, res) {
 }
 
 export async function remove(req, res) {
-  await itemService.deleteItem(req.params.id, req.user)
+  await itemService.deleteItem(req.params.id, req.user, { ipAddress: req.ip })
   res.json({ success: true, data: null })
 }
 

@@ -7,20 +7,24 @@ const includeDefault = {
   user: { select: { id: true, name: true, avatarUrl: true } },
 }
 
+const notDeleted = { deletedAt: null }
+
 export function create(data) {
   return prisma.item.create({ data, include: includeDefault })
 }
 
 export function findById(id) {
-  return prisma.item.findUnique({ where: { id }, include: includeDefault })
+  return prisma.item.findFirst({ where: { id, ...notDeleted }, include: includeDefault })
 }
 
 export function update(id, data) {
   return prisma.item.update({ where: { id }, data, include: includeDefault })
 }
 
+// Soft delete: keeps the row (and its claims/images/matches history) for
+// audit purposes, just hides it from every normal read path.
 export function remove(id) {
-  return prisma.item.delete({ where: { id } })
+  return prisma.item.update({ where: { id }, data: { deletedAt: new Date() } })
 }
 
 export function findActiveByTypeAndCategory(type, categoryId, excludeItemId) {
@@ -30,13 +34,14 @@ export function findActiveByTypeAndCategory(type, categoryId, excludeItemId) {
       categoryId,
       status: 'ACTIVE',
       id: { not: excludeItemId },
+      ...notDeleted,
     },
     include: includeDefault,
   })
 }
 
 function buildWhere({ search, type, category, location, status, dateFrom, dateTo }) {
-  const where = {}
+  const where = { ...notDeleted }
   if (type) where.type = type
   if (category) where.categoryId = category
   if (location) where.locationId = location
@@ -87,5 +92,9 @@ export async function search(filters) {
 }
 
 export function findByUser(userId) {
-  return prisma.item.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, include: includeDefault })
+  return prisma.item.findMany({
+    where: { userId, ...notDeleted },
+    orderBy: { createdAt: 'desc' },
+    include: includeDefault,
+  })
 }

@@ -1,5 +1,6 @@
 import { ApiError } from '../middleware/errorHandler.js'
 import * as itemRepo from '../repositories/itemRepository.js'
+import { record } from './auditLogService.js'
 import { generateMatchesForItem } from './matchingService.js'
 
 const UNEDITABLE_STATUSES = new Set(['CLAIMED', 'RESOLVED'])
@@ -41,7 +42,7 @@ export async function updateItem(id, user, payload) {
   return itemRepo.update(id, payload)
 }
 
-export async function deleteItem(id, user) {
+export async function deleteItem(id, user, requestMeta = {}) {
   const item = await getItem(id)
   assertOwnerOrModerator(item, user)
 
@@ -50,6 +51,12 @@ export async function deleteItem(id, user) {
   }
 
   await itemRepo.remove(id)
+  // Every deletion is audited, not just admin/moderator ones — an owner
+  // deleting their own item after a dispute should still leave a record.
+  await record(user.id, 'ITEM_DELETED', 'Item', id, {
+    metadata: { deletedByRole: user.role, wasOwner: item.userId === user.id },
+    ipAddress: requestMeta.ipAddress,
+  })
 }
 
 export async function searchItems(filters) {

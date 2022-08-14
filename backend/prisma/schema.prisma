@@ -3,8 +3,13 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Supabase's pooled connection (pgbouncer transaction mode) doesn't support
+  // the session-level advisory lock `prisma migrate` needs — migrations run
+  // against the direct connection instead. The app itself still uses the
+  // pooled DATABASE_URL at runtime.
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -170,6 +175,7 @@ model Item {
 
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
 
   @@index([type])
   @@index([status])
@@ -177,6 +183,7 @@ model Item {
   @@index([locationId])
   @@index([eventDate])
   @@index([createdAt])
+  @@index([deletedAt])
 }
 
 model ItemImage {
