@@ -1,5 +1,6 @@
 import argon2 from 'argon2'
 import { ApiError } from '../middleware/errorHandler.js'
+import * as campusRepo from '../repositories/campusRepository.js'
 import * as refreshTokenRepo from '../repositories/refreshTokenRepository.js'
 import * as userRepo from '../repositories/userRepository.js'
 import { env } from '../config/env.js'
@@ -33,8 +34,30 @@ export async function register({ name, email, password }) {
     throw new ApiError(409, 'EMAIL_ALREADY_REGISTERED', 'An account with this email already exists.')
   }
 
+  // If any campus has a configured email domain, registration is limited to
+  // recognized campus domains — this is what makes "which campus is this
+  // user on" a real, verified fact rather than free text. A deployment with
+  // no domain-restricted campuses (all domain: null) skips this entirely.
+  const domain = email.split('@')[1]
+  const campuses = await campusRepo.findAll()
+  const domainRestricted = campuses.some((c) => c.domain)
+  const matchedCampus = campuses.find((c) => c.domain === domain)
+
+  if (domainRestricted && !matchedCampus) {
+    throw new ApiError(
+      400,
+      'UNSUPPORTED_EMAIL_DOMAIN',
+      'Registration is limited to recognized campus email addresses.',
+    )
+  }
+
   const passwordHash = await argon2.hash(password)
-  const user = await userRepo.createUser({ name, email, passwordHash })
+  const user = await userRepo.createUser({
+    name,
+    email,
+    passwordHash,
+    campusId: matchedCampus?.id,
+  })
 
   const verificationToken = signEmailVerificationToken(user)
   await sendVerificationEmail(user, verificationToken)

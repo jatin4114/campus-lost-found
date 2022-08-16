@@ -86,6 +86,7 @@ model Campus {
   name      String
   domain    String?    @unique
   locations Location[]
+  users     User[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 }
@@ -124,6 +125,8 @@ model User {
   isActive    Boolean  @default(true)
   failedLoginAttempts Int       @default(0)
   lockedUntil         DateTime?
+  campusId    String?
+  campus      Campus?  @relation(fields: [campusId], references: [id], onDelete: SetNull)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -138,6 +141,7 @@ model User {
   messages             Message[]
 
   @@index([email])
+  @@index([campusId])
 }
 
 model RefreshToken {

@@ -3,6 +3,7 @@ import * as adminController from '../controllers/adminController.js'
 import { requireAuth, requireRole } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
 import {
+  createCampusSchema,
   createCategorySchema,
   createLocationSchema,
   idParamSchema,
@@ -26,6 +27,9 @@ adminRouter.post('/users/:id/reactivate', requireRole('ADMIN'), validate(userIdP
 
 adminRouter.get('/reports', validate(listReportsQuerySchema), adminController.listReports)
 adminRouter.post('/reports/:id/review', validate(reviewReportSchema), adminController.reviewReport)
+
+adminRouter.get('/campuses', requireRole('ADMIN'), adminController.listCampuses)
+adminRouter.post('/campuses', requireRole('ADMIN'), validate(createCampusSchema), adminController.createCampus)
 
 adminRouter.post('/categories', requireRole('ADMIN'), validate(createCategorySchema), adminController.createCategory)
 adminRouter.put('/categories/:id', requireRole('ADMIN'), validate(updateCategorySchema), adminController.updateCategory)

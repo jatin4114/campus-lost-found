@@ -10,6 +10,7 @@ import { env } from './config/env.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import { adminRouter } from './routes/admin.js'
 import { authRouter } from './routes/auth.js'
+import { campusRouter } from './routes/campuses.js'
 import { categoryRouter } from './routes/categories.js'
 import { conversationRouter } from './routes/conversations.js'
 import { healthRouter } from './routes/health.js'
@@ -38,6 +39,7 @@ export function createApp() {
 
   app.use('/api/v1/health', healthRouter)
   app.use('/api/v1/auth', authRouter)
+  app.use('/api/v1/campuses', campusRouter)
   app.use('/api/v1/categories', categoryRouter)
   app.use('/api/v1/locations', locationRouter)
   app.use('/api/v1/items', itemRouter)

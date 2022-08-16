@@ -1,4 +1,5 @@
 import { ApiError } from '../middleware/errorHandler.js'
+import * as campusRepo from '../repositories/campusRepository.js'
 import * as categoryRepo from '../repositories/categoryRepository.js'
 import * as locationRepo from '../repositories/locationRepository.js'
 
@@ -22,6 +23,14 @@ function translatePrismaError(err, entityName) {
   }
 
   throw err
+}
+
+export async function listCampuses() {
+  return campusRepo.findAll()
+}
+
+export async function createCampus(payload) {
+  return campusRepo.create(payload)
 }
 
 export async function createCategory(name) {

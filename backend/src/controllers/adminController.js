@@ -27,6 +27,15 @@ export async function reviewReport(req, res) {
   res.json({ success: true, data: { report } })
 }
 
+export async function listCampuses(req, res) {
+  res.json({ success: true, data: { campuses: await taxonomyService.listCampuses() } })
+}
+
+export async function createCampus(req, res) {
+  const campus = await taxonomyService.createCampus(req.body)
+  res.status(201).json({ success: true, data: { campus } })
+}
+
 export async function createCategory(req, res) {
   const category = await taxonomyService.createCategory(req.body.name)
   res.status(201).json({ success: true, data: { category } })

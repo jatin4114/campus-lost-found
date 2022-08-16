@@ -1,5 +1,12 @@
 import { z } from 'zod'
 
+export const createCampusSchema = z.object({
+  body: z.object({
+    name: z.string().trim().min(2).max(120),
+    domain: z.string().trim().toLowerCase().min(3).max(255).optional(),
+  }),
+})
+
 export const createCategorySchema = z.object({
   body: z.object({ name: z.string().trim().min(2).max(60) }),
 })
