@@ -181,6 +181,13 @@ model Item {
   updatedAt   DateTime   @updatedAt
   deletedAt   DateTime?
 
+  // Generated STORED column (see migration SQL) — Prisma can't express the
+  // generated-column syntax itself, so this is declared Unsupported and the
+  // migration is hand-edited to add the real `GENERATED ALWAYS AS (...)
+  // STORED` definition + a GIN index. Queried via $queryRaw in
+  // itemRepository, never through the Prisma client directly.
+  searchVector Unsupported("tsvector")?
+
   @@index([type])
   @@index([status])
   @@index([categoryId])

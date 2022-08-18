@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import { prisma } from '../config/prisma.js'
 
 const includeDefault = {
@@ -40,45 +41,69 @@ export function findActiveByTypeAndCategory(type, categoryId, excludeItemId) {
   })
 }
 
-function buildWhere({ search, type, category, location, status, dateFrom, dateTo }) {
-  const where = { ...notDeleted }
-  if (type) where.type = type
-  if (category) where.categoryId = category
-  if (location) where.locationId = location
-  if (status) where.status = status
-  else where.status = { not: 'EXPIRED' }
+// Builds the shared structured-filter conditions as raw SQL fragments, so
+// they apply identically whether or not a text search is also present.
+function buildConditions({ type, category, location, status, dateFrom, dateTo }) {
+  const conditions = [Prisma.sql`"deletedAt" IS NULL`]
 
-  if (dateFrom || dateTo) {
-    where.eventDate = {}
-    if (dateFrom) where.eventDate.gte = dateFrom
-    if (dateTo) where.eventDate.lte = dateTo
-  }
+  if (type) conditions.push(Prisma.sql`"type" = ${type}::"ItemType"`)
+  if (category) conditions.push(Prisma.sql`"categoryId" = ${category}`)
+  if (location) conditions.push(Prisma.sql`"locationId" = ${location}`)
+  if (status) conditions.push(Prisma.sql`"status" = ${status}::"ItemStatus"`)
+  else conditions.push(Prisma.sql`"status" != 'EXPIRED'::"ItemStatus"`)
 
-  if (search) {
-    where.OR = [
-      { title: { contains: search, mode: 'insensitive' } },
-      { description: { contains: search, mode: 'insensitive' } },
-    ]
-  }
+  if (dateFrom) conditions.push(Prisma.sql`"eventDate" >= ${dateFrom}`)
+  if (dateTo) conditions.push(Prisma.sql`"eventDate" <= ${dateTo}`)
 
-  return where
+  return conditions
 }
 
-function buildOrderBy(sort) {
-  if (sort === 'oldest') return { createdAt: 'asc' }
-  if (sort === 'eventDate') return { eventDate: 'desc' }
-  return { createdAt: 'desc' }
+function buildOrderBy(sort, hasSearch) {
+  if (hasSearch) return Prisma.sql`rank DESC, "createdAt" DESC`
+  if (sort === 'oldest') return Prisma.sql`"createdAt" ASC`
+  if (sort === 'eventDate') return Prisma.sql`"eventDate" DESC`
+  return Prisma.sql`"createdAt" DESC`
 }
 
+// Full-text search over the generated `searchVector` column (title weighted
+// above description — see the migration) via websearch_to_tsquery, which
+// tolerates free-form user input (quotes, "-exclude") without throwing the
+// way plainto_tsquery can on stray punctuation. Falls back to a plain
+// filtered/sorted query when there's no search term.
 export async function search(filters) {
-  const where = buildWhere(filters)
-  const orderBy = buildOrderBy(filters.sort)
+  const conditions = buildConditions(filters)
+  const hasSearch = Boolean(filters.search)
+
+  if (hasSearch) {
+    conditions.push(Prisma.sql`"searchVector" @@ websearch_to_tsquery('english', ${filters.search})`)
+  }
+
+  const whereSql = Prisma.join(conditions, ' AND ')
+  const rankSelect = hasSearch
+    ? Prisma.sql`, ts_rank("searchVector", websearch_to_tsquery('english', ${filters.search})) AS rank`
+    : Prisma.empty
+  const orderBySql = buildOrderBy(filters.sort, hasSearch)
   const skip = (filters.page - 1) * filters.limit
 
-  const [data, total] = await Promise.all([
-    prisma.item.findMany({ where, orderBy, skip, take: filters.limit, include: includeDefault }),
-    prisma.item.count({ where }),
+  const [rows, totalRows] = await Promise.all([
+    prisma.$queryRaw`
+      SELECT "id"${rankSelect}
+      FROM "Item"
+      WHERE ${whereSql}
+      ORDER BY ${orderBySql}
+      LIMIT ${filters.limit} OFFSET ${skip}
+    `,
+    prisma.$queryRaw`SELECT COUNT(*)::int AS count FROM "Item" WHERE ${whereSql}`,
   ])
+
+  const orderedIds = rows.map((r) => r.id)
+  const items = orderedIds.length
+    ? await prisma.item.findMany({ where: { id: { in: orderedIds } }, include: includeDefault })
+    : []
+  const itemsById = new Map(items.map((item) => [item.id, item]))
+  const data = orderedIds.map((id) => itemsById.get(id)).filter(Boolean)
+
+  const total = totalRows[0]?.count ?? 0
 
   return {
     data,
