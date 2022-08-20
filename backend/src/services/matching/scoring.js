@@ -24,9 +24,14 @@ export function tierForScore(score) {
 }
 
 // Returns a 0-100 weighted match score between a lost item and a found item.
-export function scoreMatch(lostItem, foundItem) {
+// `descriptionScore` can be supplied by the caller (matchingService computes
+// it via TF-IDF cosine similarity across the whole candidate batch, which
+// needs more than two documents to be meaningful) — falls back to the same
+// Jaccard+Levenshtein blend used for titles when called standalone, e.g. in
+// unit tests.
+export function scoreMatch(lostItem, foundItem, { descriptionScore: precomputedDescriptionScore } = {}) {
   const titleScore = textSimilarity(lostItem.title, foundItem.title)
-  const descriptionScore = textSimilarity(lostItem.description, foundItem.description)
+  const descriptionScore = precomputedDescriptionScore ?? textSimilarity(lostItem.description, foundItem.description)
   const categoryScore = lostItem.categoryId === foundItem.categoryId ? 1 : 0
   const locationScore = locationSimilarity(lostItem.location, foundItem.location)
   const dateScore = dateSimilarity(lostItem.eventDate, foundItem.eventDate)

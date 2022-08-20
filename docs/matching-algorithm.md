@@ -24,7 +24,7 @@ score = titleScore     * 0.30
 
 `score` is on a 0-100 scale (`backend/src/services/matching/scoring.js`).
 
-### Title / description — `textSimilarity`
+### Title — `textSimilarity`
 
 Blends two signals so both word-level and character-level variation are
 tolerated:
@@ -34,6 +34,22 @@ tolerated:
   "Apple AirPods Pro").
 - **Levenshtein similarity** (40%), `1 - editDistance / maxLength` over the
   normalized full string — handles typos and minor character-level variants.
+
+Titles stay on this blend rather than TF-IDF below — they're short enough
+(often 2-4 words) that document-frequency weighting doesn't have much to
+work with, and exact-ish token/character overlap is a stronger signal there.
+
+### Description — TF-IDF cosine similarity (`tfidf.js`)
+
+Descriptions use a real TF-IDF vector comparison instead: when a new item is
+created, `matchingService` builds a corpus from that item's description plus
+every same-category candidate's description, computes each document's
+TF-IDF vector against that corpus, and takes the cosine similarity between
+the new item's vector and each candidate's. This means a word every
+candidate happens to share (generic descriptive language) is naturally
+downweighted relative to a word that's actually distinctive to a specific
+pair — something a plain word-overlap count can't do, since it has no
+concept of "common in this batch" vs. "rare and therefore meaningful."
 
 ### Category — exact match
 
@@ -72,12 +88,15 @@ weights change later, even though the UI only highlights POSSIBLE and above.
 
 ## Testing
 
-`backend/tests/unit/{textSimilarity,locationSimilarity,dateSimilarity,scoring}.test.js`
+`backend/tests/unit/{textSimilarity,locationSimilarity,dateSimilarity,scoring,tfidf}.test.js`
 cover each component in isolation plus the end-to-end weighted score, including
 the worked "AirPods Pro" / "AirPods" example from the product brief.
 
 ## Future improvements
 
-TF-IDF/cosine similarity for description matching would generalize better
+A larger, cross-request IDF corpus (computed from all active items, not just
+the current candidate batch) would make the description score more stable
+as the item count grows — the per-request corpus works well at small scale
+but a batch of only 2-3 candidates gives IDF little to work with.
 than Jaccard as item descriptions get longer and more varied — noted here as
 a deliberate scope cut, not an oversight.
