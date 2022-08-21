@@ -1,7 +1,8 @@
 import { ApiError } from '../middleware/errorHandler.js'
 import * as itemRepo from '../repositories/itemRepository.js'
 import * as matchRepo from '../repositories/matchRepository.js'
-import { scoreMatch, tierForScore, MATCH_TIERS } from './matching/scoring.js'
+import { MATCH_TIERS, scoreMatch, tierForScore } from './matching/scoring.js'
+import { tfidfSimilarityToFirst } from './matching/tfidf.js'
 import { notify } from './notificationService.js'
 
 const MIN_SCORE_TO_PERSIST = 40
@@ -15,11 +16,20 @@ export async function generateMatchesForItem(item) {
   const oppositeType = item.type === 'LOST' ? 'FOUND' : 'LOST'
   const candidates = await itemRepo.findActiveByTypeAndCategory(oppositeType, item.categoryId, item.id)
 
+  // TF-IDF needs a corpus bigger than a single pair to be meaningful — build
+  // it once from this item plus every candidate, so a word every candidate
+  // shares gets downweighted relative to one that's actually distinctive.
+  const descriptionSimilarities = tfidfSimilarityToFirst([
+    item.description,
+    ...candidates.map((c) => c.description),
+  ])
+
   const results = []
-  for (const candidate of candidates) {
+  for (const [index, candidate] of candidates.entries()) {
     const lostItem = item.type === 'LOST' ? item : candidate
     const foundItem = item.type === 'LOST' ? candidate : item
-    const score = scoreMatch(lostItem, foundItem)
+    const descriptionScore = descriptionSimilarities[index + 1]
+    const score = scoreMatch(lostItem, foundItem, { descriptionScore })
 
     if (score >= MIN_SCORE_TO_PERSIST) {
       const match = await matchRepo.upsert({ lostItemId: lostItem.id, foundItemId: foundItem.id, score })
