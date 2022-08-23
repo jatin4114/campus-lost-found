@@ -20,6 +20,7 @@ import { locationRouter } from './routes/locations.js'
 import { matchRouter } from './routes/matches.js'
 import { apiRateLimiter } from './middleware/rateLimit.js'
 import { reportRouter } from './routes/reports.js'
+import { savedSearchRouter } from './routes/savedSearches.js'
 import { notificationRouter } from './routes/notifications.js'
 import { UPLOAD_DIR } from './services/storageService.js'
 
@@ -48,6 +49,7 @@ export function createApp() {
   app.use('/api/v1/notifications', notificationRouter)
   app.use('/api/v1/conversations', conversationRouter)
   app.use('/api/v1/reports', reportRouter)
+  app.use('/api/v1/saved-searches', savedSearchRouter)
   app.use('/api/v1/admin', adminRouter)
 
   app.use(notFoundHandler)

@@ -2,15 +2,20 @@ import { ApiError } from '../middleware/errorHandler.js'
 import * as itemRepo from '../repositories/itemRepository.js'
 import { record } from './auditLogService.js'
 import { generateMatchesForItem } from './matchingService.js'
+import { notifyMatchingSavedSearches } from './savedSearchService.js'
 
 const UNEDITABLE_STATUSES = new Set(['CLAIMED', 'RESOLVED'])
 
 export async function createItem(userId, payload) {
   const item = await itemRepo.create({ ...payload, userId })
-  // Matching runs against same-category active items and is cheap at this
-  // scale; if the candidate set grows large this should move to a queue.
+  // Matching and saved-search alerts run against the current small item set
+  // and are cheap at this scale; if it grows large both should move to a
+  // queue instead of running inline on the request.
   await generateMatchesForItem(item).catch((err) => {
     console.error('Match generation failed for item', item.id, err)
+  })
+  await notifyMatchingSavedSearches(item).catch((err) => {
+    console.error('Saved-search notification failed for item', item.id, err)
   })
   return item
 }

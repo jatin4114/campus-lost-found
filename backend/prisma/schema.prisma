@@ -58,6 +58,7 @@ enum NotificationType {
   CLAIM_REJECTED
   NEW_MESSAGE
   ITEM_RESOLVED
+  SAVED_SEARCH_MATCH
 }
 
 enum ReportReason {
@@ -139,6 +140,7 @@ model User {
   auditLogs            AuditLog[]            @relation("AuditLogsActed")
   conversationMemberships ConversationParticipant[]
   messages             Message[]
+  savedSearches        SavedSearch[]
 
   @@index([email])
   @@index([campusId])
@@ -351,4 +353,21 @@ model AuditLog {
 
   @@index([actorId])
   @@index([entityType, entityId])
+}
+
+// Filters are stored loosely (plain ids, no FK) rather than relations —
+// a saved search should keep working (just matching nothing) if its
+// category/location is later deleted, not cascade-delete or block that.
+model SavedSearch {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  type       ItemType?
+  categoryId String?
+  locationId String?
+  search     String?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
 }
