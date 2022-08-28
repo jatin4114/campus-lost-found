@@ -200,13 +200,15 @@ model Item {
 }
 
 model ItemImage {
-  id         String   @id @default(cuid())
-  itemId     String
-  item       Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  url        String
-  storageKey String
-  position   Int      @default(0)
-  createdAt  DateTime @default(now())
+  id            String   @id @default(cuid())
+  itemId        String
+  item          Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  url           String
+  thumbnailUrl  String?
+  storageKey    String
+  thumbnailStorageKey String?
+  position      Int      @default(0)
+  createdAt     DateTime @default(now())
 
   @@index([itemId])
 }

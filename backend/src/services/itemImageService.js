@@ -30,13 +30,15 @@ export async function addImages(itemId, user, files) {
     )
   }
 
-  const saved = await Promise.all(files.map((file) => storageService.save(file.buffer, file.originalname)))
+  const saved = await Promise.all(files.map((file) => storageService.save(file.buffer)))
 
   await itemImageRepo.createMany(
     saved.map((s, index) => ({
       itemId,
       url: s.url,
+      thumbnailUrl: s.thumbnailUrl,
       storageKey: s.storageKey,
+      thumbnailStorageKey: s.thumbnailStorageKey,
       position: existingCount + index,
     })),
   )
@@ -54,7 +56,7 @@ export async function removeImage(itemId, imageId, user) {
   }
 
   await itemImageRepo.remove(imageId)
-  await storageService.remove(image.storageKey)
+  await storageService.remove(image.storageKey, image.thumbnailStorageKey)
 
   return getItem(itemId)
 }

@@ -40,7 +40,11 @@ Item images are validated by MIME type (JPEG/PNG/WebP only), capped at 5MB
 and 5 images per item (`middleware/upload.js`), and stored on disk with a
 randomly generated filename (`crypto.randomUUID()`) — the original filename
 and its extension-implied type are never trusted for anything beyond a
-display hint.
+display hint. Every upload is re-encoded through `sharp` (resized to a
+1600px max dimension, re-saved as WebP) before being written to disk, which
+strips EXIF metadata as a side effect — including GPS coordinates a phone
+camera embeds by default, which nobody uploading a photo of a found item is
+likely thinking about exposing.
 
 ## Transport/header hardening
 

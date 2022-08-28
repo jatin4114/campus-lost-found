@@ -51,6 +51,18 @@ advisory lock — check `pg_locks`/`pg_stat_activity` for an idle session and
 terminate it (`SELECT pg_terminate_backend(<pid>)`), or just wait: Supabase
 auto-suspends idle compute after a few minutes, which clears it too.
 
+**If `migrate dev` refuses with "was modified after it was applied" and offers
+only `migrate reset`**: this happens after a migration fails partway (e.g. a
+hand-edited SQL file that had a bug on its first attempt), leaving both a
+rolled-back row and a later successful row for the same migration name in
+`_prisma_migrations` — `migrate dev`'s shadow-database drift check doesn't
+like that history shape, even though the actually-applied state is fine.
+**Do not run `migrate reset`** against Supabase — it drops and recreates the
+whole schema. Instead, hand-write the new migration file directly
+(`mkdir prisma/migrations/<timestamp>_<name>/` + a `migration.sql` you write
+yourself) and apply it with `prisma migrate deploy`, which only applies
+pending files in order and isn't affected by this drift check at all.
+
 ## Core entities
 
 `User`, `Campus`, `Location`, `Category`, `Item`, `ItemImage`, `Claim`,
