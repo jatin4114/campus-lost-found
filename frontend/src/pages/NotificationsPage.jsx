@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   useMarkAllNotificationsRead,
   useMarkNotificationRead,
@@ -5,7 +6,8 @@ import {
 } from '../services/notificationsApi'
 
 export function NotificationsPage() {
-  const { data, isLoading } = useNotifications()
+  const [page, setPage] = useState(1)
+  const { data, isLoading } = useNotifications(page)
   const markRead = useMarkNotificationRead()
   const markAllRead = useMarkAllNotificationsRead()
 
@@ -43,6 +45,30 @@ export function NotificationsPage() {
           </button>
         ))}
       </div>
+
+      {data?.pagination && data.pagination.totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-center gap-3 text-sm">
+          <button
+            type="button"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="rounded-md border border-slate-300 px-3 py-1 disabled:opacity-40"
+          >
+            Previous
+          </button>
+          <span>
+            Page {data.pagination.page} of {data.pagination.totalPages}
+          </span>
+          <button
+            type="button"
+            disabled={page >= data.pagination.totalPages}
+            onClick={() => setPage((p) => p + 1)}
+            className="rounded-md border border-slate-300 px-3 py-1 disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   )
 }

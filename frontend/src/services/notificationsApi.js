@@ -2,13 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../lib/apiClient'
 import { useAuth } from '../context/AuthContext'
 
-export function useNotifications() {
+export function useNotifications(page = 1) {
   const { status } = useAuth()
   return useQuery({
-    queryKey: ['notifications'],
-    queryFn: async () => (await apiClient.get('/notifications')).data.data,
+    queryKey: ['notifications', page],
+    queryFn: async () => (await apiClient.get('/notifications', { params: { page, limit: 20 } })).data.data,
     enabled: status === 'authenticated',
     refetchInterval: 15000,
+    placeholderData: (previous) => previous,
   })
 }
 
