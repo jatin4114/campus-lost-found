@@ -4,8 +4,13 @@ export function create({ userId, type, title, message, metadata }) {
   return prisma.notification.create({ data: { userId, type, title, message, metadata } })
 }
 
-export function findByUser(userId) {
-  return prisma.notification.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 50 })
+export async function findByUser(userId, { page, limit }) {
+  const skip = (page - 1) * limit
+  const [notifications, total] = await Promise.all([
+    prisma.notification.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, skip, take: limit }),
+    prisma.notification.count({ where: { userId } }),
+  ])
+  return { notifications, total }
 }
 
 export function countUnread(userId) {

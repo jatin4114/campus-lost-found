@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+export { paginationQuerySchema } from './paginationSchema.js'
+
 export const createCampusSchema = z.object({
   body: z.object({
     name: z.string().trim().min(2).max(120),
@@ -24,13 +26,6 @@ export const createLocationSchema = z.object({
 export const listReportsQuerySchema = z.object({
   query: z.object({
     status: z.enum(['PENDING', 'DISMISSED', 'ACTIONED']).optional(),
-  }),
-})
-
-export const paginationQuerySchema = z.object({
-  query: z.object({
-    page: z.coerce.number().int().min(1).optional().default(1),
-    limit: z.coerce.number().int().min(1).max(100).optional().default(20),
   }),
 })
 

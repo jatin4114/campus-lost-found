@@ -1,7 +1,7 @@
 import * as notificationService from '../services/notificationService.js'
 
 export async function mine(req, res) {
-  const result = await notificationService.getMyNotifications(req.user.id)
+  const result = await notificationService.getMyNotifications(req.user.id, req.parsedQuery)
   res.json({ success: true, data: result })
 }
 
