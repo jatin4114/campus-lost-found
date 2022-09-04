@@ -1,12 +1,14 @@
+import crypto from 'node:crypto'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import cors from 'cors'
 import express from 'express'
 import helmet from 'helmet'
-import morgan from 'morgan'
+import pinoHttp from 'pino-http'
 import swaggerUi from 'swagger-ui-express'
 import YAML from 'yamljs'
 import { env } from './config/env.js'
+import { logger } from './config/logger.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import { adminRouter } from './routes/admin.js'
 import { authRouter } from './routes/auth.js'
@@ -33,7 +35,21 @@ export function createApp() {
   app.use(helmet())
   app.use(cors({ origin: env.corsOrigin, credentials: true }))
   app.use(express.json())
-  app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'))
+  app.use(
+    pinoHttp({
+      logger,
+      // A random id per request when the client didn't supply one — lets a
+      // support/debugging session grep every log line for one request
+      // across services, not just eyeball adjacent lines and guess.
+      genReqId: (req, res) => {
+        const existing = req.headers['x-request-id']
+        if (existing) return existing
+        const id = crypto.randomUUID()
+        res.setHeader('X-Request-Id', id)
+        return id
+      },
+    }),
+  )
   app.use('/api', apiRateLimiter)
   app.use('/uploads', express.static(UPLOAD_DIR))
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec))

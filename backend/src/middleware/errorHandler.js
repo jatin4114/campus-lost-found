@@ -29,7 +29,10 @@ export function errorHandler(err, req, res, next) {
     : err.message
 
   if (status === 500) {
-    console.error(err)
+    // req.log is pino-http's per-request child logger — using it (rather
+    // than the bare logger) means this line carries the same request id as
+    // the access log line for the same request.
+    ;(req.log ?? console).error({ err }, 'Unhandled error')
   }
 
   res.status(status).json({

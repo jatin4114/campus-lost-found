@@ -1,6 +1,7 @@
 import { createServer } from 'node:http'
 import { createApp } from './app.js'
 import { env } from './config/env.js'
+import { logger } from './config/logger.js'
 import { startExpiryJob } from './jobs/expireItems.js'
 import { initSockets } from './sockets/index.js'
 
@@ -10,5 +11,5 @@ initSockets(httpServer)
 startExpiryJob()
 
 httpServer.listen(env.port, () => {
-  console.log(`CampusFind API listening on port ${env.port} (${env.nodeEnv})`)
+  logger.info(`CampusFind API listening on port ${env.port} (${env.nodeEnv})`)
 })

@@ -44,8 +44,8 @@ React ── HTTPS/REST + Socket.IO ── Express ── services ── reposi
 - **Frontend:** React (JavaScript, no TypeScript), Vite, React Router,
   TanStack Query, React Hook Form, Zod, Tailwind CSS, Socket.IO client
 - **Backend:** Node.js, Express, Prisma ORM, JWT, argon2, Socket.IO, Zod,
-  Helmet, express-rate-limit, Multer, Winston-style structured logging via
-  morgan
+  Helmet, express-rate-limit, Multer, sharp, structured logging via pino/
+  pino-http (request-id correlated, pretty-printed in dev, JSON in prod)
 - **Database:** PostgreSQL hosted on [Supabase](https://supabase.com) in
   production; a local Postgres container in development (same
   `DATABASE_URL`-driven setup — swapping to Supabase is a one-line change)

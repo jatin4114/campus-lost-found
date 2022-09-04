@@ -1,3 +1,4 @@
+import { logger } from '../config/logger.js'
 import { ApiError } from '../middleware/errorHandler.js'
 import * as itemRepo from '../repositories/itemRepository.js'
 import { record } from './auditLogService.js'
@@ -12,10 +13,10 @@ export async function createItem(userId, payload) {
   // and are cheap at this scale; if it grows large both should move to a
   // queue instead of running inline on the request.
   await generateMatchesForItem(item).catch((err) => {
-    console.error('Match generation failed for item', item.id, err)
+    logger.error({ err, itemId: item.id }, 'Match generation failed')
   })
   await notifyMatchingSavedSearches(item).catch((err) => {
-    console.error('Saved-search notification failed for item', item.id, err)
+    logger.error({ err, itemId: item.id }, 'Saved-search notification failed')
   })
   return item
 }

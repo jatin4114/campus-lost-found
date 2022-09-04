@@ -1,4 +1,5 @@
 import { prisma } from '../config/prisma.js'
+import { logger } from '../config/logger.js'
 
 const STALE_AFTER_DAYS = 30
 const ONE_HOUR_MS = 60 * 60 * 1000
@@ -16,15 +17,15 @@ export async function expireStaleItems() {
   })
 
   if (result.count > 0) {
-    console.log(`[expireItems] marked ${result.count} stale item(s) EXPIRED`)
+    logger.info({ count: result.count }, '[expireItems] marked stale items EXPIRED')
   }
 
   return result.count
 }
 
 export function startExpiryJob(intervalMs = ONE_HOUR_MS) {
-  expireStaleItems().catch((err) => console.error('[expireItems] initial run failed', err))
+  expireStaleItems().catch((err) => logger.error({ err }, '[expireItems] initial run failed'))
   return setInterval(() => {
-    expireStaleItems().catch((err) => console.error('[expireItems] scheduled run failed', err))
+    expireStaleItems().catch((err) => logger.error({ err }, '[expireItems] scheduled run failed'))
   }, intervalMs)
 }
