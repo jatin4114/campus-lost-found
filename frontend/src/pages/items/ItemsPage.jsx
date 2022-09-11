@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ItemGridSkeleton } from '../../components/common/Skeleton'
 import { ItemCard } from '../../components/items/ItemCard'
 import { useCategories, useItems, useLocations } from '../../services/itemsApi'
 
@@ -53,16 +54,18 @@ export function ItemsPage() {
         </select>
       </div>
 
-      {isLoading && <p className="mt-8 text-slate-500">Loading…</p>}
+      {isLoading && <div className="mt-6"><ItemGridSkeleton /></div>}
       {isError && <p className="mt-8 text-red-600">Couldn't load items. Try again.</p>}
 
       {data && data.items.length === 0 && (
         <p className="mt-8 text-slate-500">No items match your filters.</p>
       )}
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {data?.items.map((item) => <ItemCard key={item.id} item={item} />)}
-      </div>
+      {!isLoading && (
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {data?.items.map((item) => <ItemCard key={item.id} item={item} />)}
+        </div>
+      )}
 
       {data?.pagination && data.pagination.totalPages > 1 && (
         <div className="mt-6 flex items-center justify-center gap-3 text-sm">

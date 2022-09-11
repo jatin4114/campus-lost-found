@@ -1,3 +1,4 @@
+import { TableRowsSkeleton } from '../../components/common/Skeleton'
 import { useAuditLogs } from '../../services/adminApi'
 
 export function AdminAuditLogsPage() {
@@ -6,7 +7,6 @@ export function AdminAuditLogsPage() {
   return (
     <div>
       <h1 className="text-2xl font-semibold text-slate-900">Audit logs</h1>
-      {isLoading && <p className="mt-6 text-slate-500">Loading…</p>}
       <div className="mt-6 overflow-x-auto rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-slate-200 text-slate-500">
@@ -18,6 +18,7 @@ export function AdminAuditLogsPage() {
             </tr>
           </thead>
           <tbody>
+            {isLoading && <TableRowsSkeleton columns={4} />}
             {logs?.map((log) => (
               <tr key={log.id} className="border-b border-slate-100 last:border-0">
                 <td className="p-3 text-slate-500">{new Date(log.createdAt).toLocaleString()}</td>

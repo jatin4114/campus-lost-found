@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ListSkeleton } from '../components/common/Skeleton'
 import {
   useMarkAllNotificationsRead,
   useMarkNotificationRead,
@@ -26,25 +27,27 @@ export function NotificationsPage() {
         )}
       </div>
 
-      {isLoading && <p className="mt-8 text-slate-500">Loading…</p>}
+      {isLoading && <div className="mt-6"><ListSkeleton /></div>}
       {data && data.notifications.length === 0 && (
         <p className="mt-8 text-slate-500">You're all caught up.</p>
       )}
 
-      <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
-        {data?.notifications.map((n) => (
-          <button
-            key={n.id}
-            type="button"
-            onClick={() => !n.read && markRead.mutate(n.id)}
-            className={`block w-full p-4 text-left ${n.read ? 'bg-white' : 'bg-slate-50'}`}
-          >
-            <p className="font-medium text-slate-900">{n.title}</p>
-            <p className="mt-1 text-sm text-slate-600">{n.message}</p>
-            <p className="mt-1 text-xs text-slate-400">{new Date(n.createdAt).toLocaleString()}</p>
-          </button>
-        ))}
-      </div>
+      {!isLoading && (
+        <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
+          {data?.notifications.map((n) => (
+            <button
+              key={n.id}
+              type="button"
+              onClick={() => !n.read && markRead.mutate(n.id)}
+              className={`block w-full p-4 text-left ${n.read ? 'bg-white' : 'bg-slate-50'}`}
+            >
+              <p className="font-medium text-slate-900">{n.title}</p>
+              <p className="mt-1 text-sm text-slate-600">{n.message}</p>
+              <p className="mt-1 text-xs text-slate-400">{new Date(n.createdAt).toLocaleString()}</p>
+            </button>
+          ))}
+        </div>
+      )}
 
       {data?.pagination && data.pagination.totalPages > 1 && (
         <div className="mt-6 flex items-center justify-center gap-3 text-sm">

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ListSkeleton } from '../../components/common/Skeleton'
 import { useAdminReports, useReviewReport } from '../../services/adminApi'
 
 const ACTIONS = [
@@ -28,11 +29,11 @@ export function AdminReportsPage() {
         </select>
       </div>
 
-      {isLoading && <p className="mt-6 text-slate-500">Loading…</p>}
+      {isLoading && <div className="mt-6"><ListSkeleton /></div>}
       {reports && reports.length === 0 && <p className="mt-6 text-slate-500">Nothing here.</p>}
 
       <div className="mt-6 space-y-3">
-        {reports?.map((report) => (
+        {!isLoading && reports?.map((report) => (
           <div key={report.id} className="rounded-lg border border-slate-200 bg-white p-4">
             <p className="font-medium text-slate-900">{report.item.title}</p>
             <p className="mt-1 text-sm text-slate-600">

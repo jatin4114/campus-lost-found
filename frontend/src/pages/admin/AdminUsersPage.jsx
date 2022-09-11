@@ -1,3 +1,4 @@
+import { TableRowsSkeleton } from '../../components/common/Skeleton'
 import { useAdminUsers, useSetUserActive } from '../../services/adminApi'
 
 export function AdminUsersPage() {
@@ -7,7 +8,6 @@ export function AdminUsersPage() {
   return (
     <div>
       <h1 className="text-2xl font-semibold text-slate-900">Users</h1>
-      {isLoading && <p className="mt-6 text-slate-500">Loading…</p>}
       <div className="mt-6 overflow-x-auto rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-slate-200 text-slate-500">
@@ -20,6 +20,7 @@ export function AdminUsersPage() {
             </tr>
           </thead>
           <tbody>
+            {isLoading && <TableRowsSkeleton columns={5} />}
             {users?.map((user) => (
               <tr key={user.id} className="border-b border-slate-100 last:border-0">
                 <td className="p-3">{user.name}</td>
