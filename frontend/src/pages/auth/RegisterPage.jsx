@@ -49,10 +49,16 @@ export function RegisterPage() {
           </label>
           <input
             id="name"
+            aria-invalid={Boolean(errors.name)}
+            aria-describedby={errors.name ? 'name-error' : undefined}
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
             {...register('name')}
           />
-          {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
+          {errors.name && (
+            <p id="name-error" role="alert" className="mt-1 text-sm text-red-600">
+              {errors.name.message}
+            </p>
+          )}
         </div>
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-slate-700">
@@ -62,10 +68,16 @@ export function RegisterPage() {
             id="email"
             type="email"
             autoComplete="email"
+            aria-invalid={Boolean(errors.email)}
+            aria-describedby={errors.email ? 'email-error' : undefined}
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
             {...register('email')}
           />
-          {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
+          {errors.email && (
+            <p id="email-error" role="alert" className="mt-1 text-sm text-red-600">
+              {errors.email.message}
+            </p>
+          )}
         </div>
         <div>
           <label htmlFor="password" className="block text-sm font-medium text-slate-700">
@@ -75,12 +87,22 @@ export function RegisterPage() {
             id="password"
             type="password"
             autoComplete="new-password"
+            aria-invalid={Boolean(errors.password)}
+            aria-describedby={errors.password ? 'password-error' : undefined}
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
             {...register('password')}
           />
-          {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
+          {errors.password && (
+            <p id="password-error" role="alert" className="mt-1 text-sm text-red-600">
+              {errors.password.message}
+            </p>
+          )}
         </div>
-        {serverError && <p className="text-sm text-red-600">{serverError}</p>}
+        {serverError && (
+          <p role="alert" className="text-sm text-red-600">
+            {serverError}
+          </p>
+        )}
         <button
           type="submit"
           disabled={isSubmitting}
