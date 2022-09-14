@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { getMediaUrl } from '../../lib/apiClient'
 
 const TYPE_STYLES = {
   LOST: 'bg-red-100 text-red-700',
@@ -6,11 +7,20 @@ const TYPE_STYLES = {
 }
 
 export function ItemCard({ item }) {
+  const thumbnail = item.images?.[0]
+
   return (
     <Link
       to={`/items/${item.id}`}
       className="block rounded-lg border border-slate-200 bg-white p-4 hover:border-slate-300 hover:shadow-sm"
     >
+      {thumbnail && (
+        <img
+          src={getMediaUrl(thumbnail.thumbnailUrl ?? thumbnail.url)}
+          alt={`Photo of ${item.title}`}
+          className="mb-3 h-32 w-full rounded-md object-cover"
+        />
+      )}
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-medium text-slate-900">{item.title}</h3>
         <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_STYLES[item.type]}`}>

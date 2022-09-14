@@ -50,3 +50,29 @@ export function useCreateItem() {
     },
   })
 }
+
+export function useUploadItemImages() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ itemId, files }) => {
+      const formData = new FormData()
+      for (const file of files) formData.append('images', file)
+      return (await apiClient.post(`/items/${itemId}/images`, formData)).data.data.item
+    },
+    onSuccess: (item) => {
+      queryClient.invalidateQueries({ queryKey: ['items', item.id] })
+      queryClient.invalidateQueries({ queryKey: ['items'] })
+    },
+  })
+}
+
+export function useDeleteItemImage() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ itemId, imageId }) =>
+      (await apiClient.delete(`/items/${itemId}/images/${imageId}`)).data.data.item,
+    onSuccess: (item) => {
+      queryClient.invalidateQueries({ queryKey: ['items', item.id] })
+    },
+  })
+}

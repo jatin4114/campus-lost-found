@@ -1,8 +1,17 @@
 import axios from 'axios'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api/v1'
+// Uploaded images are served from the backend's origin at /uploads, not
+// under /api/v1 — derive the plain origin once so <img> tags don't need to
+// know about the API's base path.
+const API_ORIGIN = BASE_URL.replace(/\/api\/v1\/?$/, '')
 
 export const apiClient = axios.create({ baseURL: BASE_URL })
+
+export function getMediaUrl(path) {
+  if (!path) return path
+  return `${API_ORIGIN}${path}`
+}
 
 let accessToken = null
 let refreshToken = null

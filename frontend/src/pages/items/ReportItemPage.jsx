@@ -3,14 +3,18 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { reportItemSchema } from '../../schemas/itemSchemas'
-import { useCategories, useCreateItem, useLocations } from '../../services/itemsApi'
+import { useCategories, useCreateItem, useLocations, useUploadItemImages } from '../../services/itemsApi'
+
+const MAX_IMAGES = 5
 
 export function ReportItemPage() {
   const { data: categories } = useCategories()
   const { data: locations } = useLocations()
   const createItem = useCreateItem()
+  const uploadImages = useUploadItemImages()
   const navigate = useNavigate()
   const [serverError, setServerError] = useState(null)
+  const [images, setImages] = useState([])
 
   const {
     register,
@@ -18,10 +22,21 @@ export function ReportItemPage() {
     formState: { errors, isSubmitting },
   } = useForm({ resolver: zodResolver(reportItemSchema), defaultValues: { type: 'LOST' } })
 
+  function handleImagesChange(e) {
+    const files = Array.from(e.target.files ?? []).slice(0, MAX_IMAGES)
+    setImages(files)
+  }
+
   async function onSubmit(values) {
     setServerError(null)
     try {
       const item = await createItem.mutateAsync(values)
+      if (images.length > 0) {
+        // Images upload as a second step after the item exists — if this
+        // fails, the report itself still succeeded, so still navigate there
+        // rather than losing the whole submission over an image hiccup.
+        await uploadImages.mutateAsync({ itemId: item.id, files: images }).catch(() => {})
+      }
       navigate(`/items/${item.id}`)
     } catch (err) {
       setServerError(err.response?.data?.error?.message ?? 'Something went wrong. Please try again.')
@@ -104,6 +119,23 @@ export function ReportItemPage() {
             {...register('description')}
           />
           {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>}
+        </div>
+
+        <div>
+          <label htmlFor="images" className="block text-sm font-medium text-slate-700">
+            Photos (optional, up to {MAX_IMAGES})
+          </label>
+          <input
+            id="images"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            onChange={handleImagesChange}
+            className="mt-1 w-full text-sm"
+          />
+          {images.length > 0 && (
+            <p className="mt-1 text-xs text-slate-500">{images.length} photo(s) selected</p>
+          )}
         </div>
 
         {serverError && <p className="text-sm text-red-600">{serverError}</p>}
