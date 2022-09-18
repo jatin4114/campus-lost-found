@@ -141,6 +141,8 @@ model User {
   conversationMemberships ConversationParticipant[]
   messages             Message[]
   savedSearches        SavedSearch[]
+  ratingsGiven         Rating[]      @relation("RatingsGiven")
+  ratingsReceived      Rating[]      @relation("RatingsReceived")
 
   @@index([email])
   @@index([campusId])
@@ -224,6 +226,7 @@ model Claim {
 
   evidence      ClaimEvidence[]
   conversation  Conversation?
+  ratings       Rating[]
 
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -231,6 +234,25 @@ model Claim {
   @@index([itemId])
   @@index([claimantId])
   @@index([status])
+}
+
+// One rating per (claim, rater) — each party in a resolved handover can
+// rate the other exactly once. Two rows per claim at most (owner rates
+// claimant, claimant rates owner), not a single "the claim's rating".
+model Rating {
+  id          String   @id @default(cuid())
+  claimId     String
+  claim       Claim    @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  raterId     String
+  rater       User     @relation("RatingsGiven", fields: [raterId], references: [id], onDelete: Cascade)
+  ratedUserId String
+  ratedUser   User     @relation("RatingsReceived", fields: [ratedUserId], references: [id], onDelete: Cascade)
+  score       Int
+  comment     String?
+  createdAt   DateTime @default(now())
+
+  @@unique([claimId, raterId])
+  @@index([ratedUserId])
 }
 
 model ClaimEvidence {
