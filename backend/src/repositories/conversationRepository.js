@@ -2,7 +2,7 @@ import { prisma } from '../config/prisma.js'
 
 const includeDefault = {
   participants: { include: { user: { select: { id: true, name: true, avatarUrl: true } } } },
-  claim: { include: { item: { select: { id: true, title: true } } } },
+  claim: { include: { item: { select: { id: true, title: true, status: true } } } },
 }
 
 export function findById(id) {
