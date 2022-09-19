@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { RatingPrompt } from '../../components/items/RatingPrompt'
 import { useAuth } from '../../context/AuthContext'
 import { apiClient } from '../../lib/apiClient'
 import { getSocket } from '../../lib/socket'
+import { useResolveItem } from '../../services/claimsApi'
 import { useConversation, useMessages } from '../../services/conversationsApi'
 
 export function ConversationPage() {
@@ -10,6 +12,7 @@ export function ConversationPage() {
   const { user } = useAuth()
   const { data: conversation } = useConversation(conversationId)
   const { data: initialMessages, isLoading } = useMessages(conversationId)
+  const resolveItem = useResolveItem()
   const [messages, setMessages] = useState([])
   const [draft, setDraft] = useState('')
   const [typingUser, setTypingUser] = useState(null)
@@ -71,12 +74,32 @@ export function ConversationPage() {
   }
 
   const other = conversation?.participants.find((p) => p.userId !== user?.id)?.user
+  const itemStatus = conversation?.claim?.item?.status
 
   return (
     <div className="mx-auto flex h-[70vh] max-w-xl flex-col rounded-lg border border-slate-200 bg-white">
       <div className="border-b border-slate-200 p-4">
-        <p className="font-medium text-slate-900">{other?.name ?? 'Conversation'}</p>
-        <p className="text-sm text-slate-500">{conversation?.claim?.item?.title}</p>
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <p className="font-medium text-slate-900">{other?.name ?? 'Conversation'}</p>
+            <p className="text-sm text-slate-500">{conversation?.claim?.item?.title}</p>
+          </div>
+          {itemStatus === 'CLAIMED' && (
+            <button
+              type="button"
+              onClick={() => resolveItem.mutate(conversation.claim.item.id)}
+              disabled={resolveItem.isPending}
+              className="shrink-0 rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            >
+              Mark resolved
+            </button>
+          )}
+          {itemStatus === 'RESOLVED' && (
+            <span className="shrink-0 rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
+              Resolved
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 space-y-2 overflow-y-auto p-4">
@@ -101,6 +124,10 @@ export function ConversationPage() {
         {typingUser && <p className="text-xs italic text-slate-400">{other?.name ?? 'They'} are typing…</p>}
         <div ref={bottomRef} />
       </div>
+
+      {itemStatus === 'RESOLVED' && (
+        <RatingPrompt claimId={conversation.claim.id} otherName={other?.name} />
+      )}
 
       <form onSubmit={handleSend} className="flex gap-2 border-t border-slate-200 p-3">
         <input
