@@ -40,3 +40,7 @@ adminRouter.put('/locations/:id', requireRole('ADMIN'), validate(updateLocationS
 adminRouter.delete('/locations/:id', requireRole('ADMIN'), validate(idParamSchema), adminController.deleteLocation)
 
 adminRouter.get('/audit-logs', requireRole('ADMIN'), validate(paginationQuerySchema), adminController.auditLogs)
+
+adminRouter.get('/export/users', requireRole('ADMIN'), adminController.exportUsers)
+adminRouter.get('/export/items', requireRole('ADMIN'), adminController.exportItems)
+adminRouter.get('/export/reports', requireRole('ADMIN'), adminController.exportReports)

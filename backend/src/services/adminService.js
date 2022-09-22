@@ -28,3 +28,25 @@ export async function setUserActive(userId, isActive, admin, requestMeta = {}) {
   })
   return userRepo.toPublicUser(user)
 }
+
+export async function exportUsers() {
+  return prisma.user.findMany({ orderBy: { createdAt: 'desc' } })
+}
+
+export async function exportItems() {
+  return prisma.item.findMany({
+    where: { deletedAt: null },
+    orderBy: { createdAt: 'desc' },
+    include: { category: true, location: true, user: { select: { name: true, email: true } } },
+  })
+}
+
+export async function exportReports() {
+  return prisma.report.findMany({
+    orderBy: { createdAt: 'desc' },
+    include: {
+      reporter: { select: { name: true, email: true } },
+      item: { select: { title: true } },
+    },
+  })
+}
