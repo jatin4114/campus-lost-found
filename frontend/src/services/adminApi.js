@@ -48,3 +48,18 @@ export function useAuditLogs() {
     },
   })
 }
+
+// A plain <a href> can't carry the Authorization header the export
+// endpoints require — fetch as a blob and trigger the download via a
+// throwaway object URL instead.
+export async function downloadAdminExport(resource) {
+  const res = await apiClient.get(`/admin/export/${resource}`, { responseType: 'blob' })
+  const url = URL.createObjectURL(res.data)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${resource}.csv`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}

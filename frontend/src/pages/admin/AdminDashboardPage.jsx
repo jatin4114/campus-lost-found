@@ -1,5 +1,11 @@
 import { Skeleton } from '../../components/common/Skeleton'
-import { useAdminStats } from '../../services/adminApi'
+import { downloadAdminExport, useAdminStats } from '../../services/adminApi'
+
+const EXPORTS = [
+  { resource: 'users', label: 'Users' },
+  { resource: 'items', label: 'Items' },
+  { resource: 'reports', label: 'Reports' },
+]
 
 const TILES = [
   { key: 'totalUsers', label: 'Users' },
@@ -38,6 +44,22 @@ export function AdminDashboardPage() {
             <p className="text-sm text-slate-500">Resolution rate</p>
           </div>
         )}
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-sm font-medium text-slate-700">Export data</h2>
+        <div className="mt-2 flex gap-2">
+          {EXPORTS.map((item) => (
+            <button
+              key={item.resource}
+              type="button"
+              onClick={() => downloadAdminExport(item.resource)}
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+            >
+              Export {item.label} CSV
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )
