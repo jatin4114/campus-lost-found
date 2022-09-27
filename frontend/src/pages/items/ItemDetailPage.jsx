@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { getMediaUrl } from '../../lib/apiClient'
 import { useDeleteItemImage, useItem } from '../../services/itemsApi'
@@ -67,6 +67,9 @@ export function ItemDetailPage() {
           {item.type}
         </span>
       </div>
+      <Link to={`/items/${item.id}/flyer`} className="mt-2 inline-block text-sm text-slate-600 underline">
+        Print/share flyer
+      </Link>
       <p className="mt-4 whitespace-pre-wrap text-slate-700">{item.description}</p>
       <dl className="mt-6 grid grid-cols-2 gap-4 text-sm">
         <div>

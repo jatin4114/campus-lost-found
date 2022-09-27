@@ -29,6 +29,8 @@ const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage').the
 const AdminAuditLogsPage = lazy(() => import('./pages/admin/AdminAuditLogsPage').then((m) => ({ default: m.AdminAuditLogsPage })))
 const MessagesPage = lazy(() => import('./pages/messages/MessagesPage').then((m) => ({ default: m.MessagesPage })))
 const ConversationPage = lazy(() => import('./pages/messages/ConversationPage').then((m) => ({ default: m.ConversationPage })))
+// Pulls in the `qrcode` library — rarely opened, so keep it out of the main bundle.
+const ItemFlyerPage = lazy(() => import('./pages/items/ItemFlyerPage').then((m) => ({ default: m.ItemFlyerPage })))
 
 const queryClient = new QueryClient()
 
@@ -52,6 +54,7 @@ function App() {
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/items" element={<ItemsPage />} />
                 <Route path="/items/:id" element={<ItemDetailPage />} />
+                <Route path="/items/:id/flyer" element={<ItemFlyerPage />} />
                 <Route element={<ProtectedRoute />}>
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/report" element={<ReportItemPage />} />

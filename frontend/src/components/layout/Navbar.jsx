@@ -12,7 +12,7 @@ export function Navbar() {
   }
 
   return (
-    <header className="border-b border-slate-200 bg-white">
+    <header className="border-b border-slate-200 bg-white print:hidden">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <Link to="/" className="text-lg font-semibold text-slate-900">
           CampusFind
