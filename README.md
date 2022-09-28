@@ -164,7 +164,11 @@ docker compose up --build
 
 Runs the frontend (nginx, port 5173) and backend (port 4000). Supabase remains
 the hosted Postgres database — `DATABASE_URL` comes from `backend/.env`,
-which is never baked into the image or committed.
+which is never baked into the image or committed. The backend container
+applies pending migrations and seeds demo data on startup
+(`docker-entrypoint.sh`), so `docker compose up --build` alone gets a fresh
+database to a working demo — no manual `prisma migrate deploy`/`db:seed`
+step needed first.
 
 ## Deployment
 
