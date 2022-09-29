@@ -172,12 +172,15 @@ step needed first.
 
 ## Deployment
 
-Not yet configured — `.github/workflows/ci.yml` runs lint + tests + build on
-every push/PR to `master`. A `deploy.yml` would follow once CI is stable
-(per the project's development-phase plan), targeting whatever platform
-hosts the containers (e.g. Fly.io/Render for the backend, Vercel/Netlify or
-the same container host for the frontend), pointed at the same Supabase
-database.
+`.github/workflows/ci.yml` runs lint + tests + build on every push/PR to
+`master`. `.github/workflows/deploy.yml` runs after CI succeeds on `master`
+and publishes both images to GitHub Container Registry
+(`ghcr.io/<owner>/campusfind-{backend,frontend}`), tagged `latest` and by
+commit SHA — no external secrets needed beyond the automatic
+`GITHUB_TOKEN`. It deliberately stops there: there's no hosting target
+configured yet (no Fly.io/Render/etc. account), so the last step — pulling
+the published image onto an actual host — is a follow-up once one is
+chosen, pointed at the same Supabase database via `DATABASE_URL`.
 
 ## Future improvements
 

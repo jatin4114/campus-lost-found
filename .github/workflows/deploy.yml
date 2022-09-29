@@ -1,0 +1,43 @@
+name: Deploy
+
+# Builds and publishes container images after CI succeeds on master.
+# Deliberately stops at "push images to a registry" rather than deploying to
+# a specific host — this project has no hosting target configured yet (no
+# Fly.io/Render/etc. account or secrets), and fabricating one would be
+# pushing to infrastructure that doesn't exist. Wiring an actual deploy step
+# (e.g. `flyctl deploy` or a Render deploy hook) is a follow-up once a real
+# target is chosen; this workflow is the safe, real part of that pipeline.
+on:
+  workflow_run:
+    workflows: [CI]
+    branches: [master]
+    types: [completed]
+
+jobs:
+  publish:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        service: [backend, frontend]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.service }}
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/campusfind-${{ matrix.service }}:latest
+            ghcr.io/${{ github.repository_owner }}/campusfind-${{ matrix.service }}:${{ github.sha }}
