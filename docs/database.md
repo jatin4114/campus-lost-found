@@ -87,6 +87,26 @@ planner switches to using them automatically once the table has enough rows
 that a full scan stops being the cheaper plan — no code or schema change
 needed when that happens.
 
+### A real composite index, added from an actual query plan
+
+Later, `EXPLAIN` against the matching engine's actual candidate query
+(`type` + `categoryId` + `status`, used by both
+`itemRepository.findActiveByTypeAndCategory` and the default browse filter)
+showed something more concrete than the seq-scan case above:
+
+```
+Index Scan using "Item_categoryId_idx" on "Item"
+  Index Cond: ("categoryId" = 'x'::text)
+  Filter: (("deletedAt" IS NULL) AND (type = 'LOST'::"ItemType") AND (status = 'ACTIVE'::"ItemStatus"))
+```
+
+Postgres used the single-column `categoryId` index to narrow the candidates,
+then filtered `type`/`status`/`deletedAt` row-by-row afterward (the
+`Filter:` line) rather than satisfying the whole predicate from an index.
+Added `@@index([categoryId, type, status])` so that, once the table is
+large enough for the planner to prefer an index path at all, it can resolve
+all three columns from the index directly instead of a post-filter step.
+
 ## Avoiding N+1 queries
 
 Every repository that returns related data (an item with its category/

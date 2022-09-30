@@ -197,6 +197,13 @@ model Item {
   @@index([categoryId])
   @@index([locationId])
   @@index([eventDate])
+  // The matching engine's candidate query (findActiveByTypeAndCategory) and
+  // the browse/search endpoint's default filter both hit type+categoryId+
+  // status together — EXPLAIN showed Postgres using only the single-column
+  // categoryId index and post-filtering the rest. This composite index lets
+  // it satisfy the whole predicate from the index once the table is large
+  // enough that the planner prefers it over a small-table sequential scan.
+  @@index([categoryId, type, status])
   @@index([createdAt])
   @@index([deletedAt])
 }
