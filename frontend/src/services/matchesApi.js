@@ -12,6 +12,22 @@ export function useDismissMatch() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (matchId) => apiClient.post(`/matches/${matchId}/dismiss`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['matches'] }),
+    // Optimistic: dismissing is a one-way "not a match" action a user
+    // expects to disappear instantly, not after a round-trip — roll back
+    // to the snapshot if the request actually fails.
+    onMutate: async (matchId) => {
+      await queryClient.cancelQueries({ queryKey: ['matches', 'mine'] })
+      const previous = queryClient.getQueryData(['matches', 'mine'])
+      queryClient.setQueryData(['matches', 'mine'], (matches) =>
+        matches?.filter((m) => m.id !== matchId),
+      )
+      return { previous }
+    },
+    onError: (err, matchId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['matches', 'mine'], context.previous)
+      }
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['matches'] }),
   })
 }
