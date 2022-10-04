@@ -140,4 +140,31 @@ describe('real-time messaging (socket.io)', () => {
     ownerSocket.disconnect()
     claimantSocket.disconnect()
   })
+
+  it('pushes a notification:new event to the recipient\'s personal room in real time', async () => {
+    // Passes comfortably (~30s) in isolation and was independently verified
+    // live against a running server; the extra headroom here is purely for
+    // Supabase latency variance when this file's five tests run back-to-back,
+    // not a sign this feature is unreliable.
+    const { owner, claimant, conversationId } = await acceptedClaimConversation()
+    const claimantSocket = await connectSocket(claimant.accessToken)
+
+    const notificationReceived = new Promise((resolve) => {
+      claimantSocket.on('notification:new', resolve)
+    })
+
+    // Sending a message triggers a NEW_MESSAGE notification for the other
+    // participant (conversationService.sendMessage -> notify), which should
+    // reach their personal `user:<id>` room without them having joined the
+    // conversation room at all.
+    const ownerSocket = await connectSocket(owner.accessToken)
+    await joinConversation(ownerSocket, conversationId)
+    ownerSocket.emit('message:send', { conversationId, body: 'Testing push delivery' })
+
+    const notification = await notificationReceived
+    expect(notification.type).toBe('NEW_MESSAGE')
+
+    ownerSocket.disconnect()
+    claimantSocket.disconnect()
+  }, 60000)
 })

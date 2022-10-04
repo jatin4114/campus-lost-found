@@ -3,6 +3,7 @@ import { env } from '../config/env.js'
 import * as conversationService from '../services/conversationService.js'
 import { createRateLimiter } from '../utils/rateLimiter.js'
 import { verifyAccessToken } from '../utils/tokens.js'
+import { setIo } from './ioRegistry.js'
 
 const MAX_MESSAGE_LENGTH = 2000
 const messageRateLimiter = createRateLimiter({ limit: 20, windowMs: 10_000 })
@@ -37,8 +38,13 @@ export function initSockets(httpServer) {
     }
   })
 
+  setIo(io)
+
   io.on('connection', (socket) => {
     markOnline(socket.userId)
+    // A personal room lets any service (notificationService) push directly
+    // to this user without knowing which socket(s) they're on.
+    socket.join(`user:${socket.userId}`)
     socket.broadcast.emit('presence:update', { userId: socket.userId, online: true })
 
     socket.on('conversation:join', async (conversationId, callback) => {
