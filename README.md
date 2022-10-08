@@ -184,13 +184,18 @@ chosen, pointed at the same Supabase database via `DATABASE_URL`.
 
 ## Future improvements
 
-- Password-reset flow (same signed-JWT pattern as email verification)
-- Move refresh tokens from the JSON body to an httpOnly cookie
-- TF-IDF/cosine similarity for description matching as descriptions get
-  longer and more varied
+- True background push (service worker + Web Push/VAPID) — real-time
+  notifications currently reach any open tab via the existing socket, but
+  not a fully closed browser
+- A larger, cross-request IDF corpus for the matching engine (currently
+  computed per-request from the candidate batch — works well at small
+  scale, see `docs/matching-algorithm.md`)
 - A map picker for campus locations (lat/lng already drive the matching
   engine's distance calculation)
-- Frontend component/E2E tests
+- Pagination for conversation message history (currently unbounded per
+  conversation — fine at low message-per-claim volumes, not indefinitely)
+- Frontend E2E tests (component + unit coverage exists; no browser-driven
+  end-to-end suite yet)
 
 ## License
 

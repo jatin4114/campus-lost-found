@@ -6,29 +6,24 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api/v1'
 // know about the API's base path.
 const API_ORIGIN = BASE_URL.replace(/\/api\/v1\/?$/, '')
 
-export const apiClient = axios.create({ baseURL: BASE_URL })
+// withCredentials is required for the browser to send/receive the httpOnly
+// refresh-token cookie on every request (the backend's CORS config already
+// allows credentials for the configured origin).
+export const apiClient = axios.create({ baseURL: BASE_URL, withCredentials: true })
 
 export function getMediaUrl(path) {
   if (!path) return path
   return `${API_ORIGIN}${path}`
 }
 
+// The refresh token itself never touches JS — it's an httpOnly cookie the
+// browser manages. Only the short-lived access token lives here, in
+// memory only (not localStorage), so an XSS payload reading page state
+// still can't get at anything long-lived.
 let accessToken = null
-let refreshToken = null
 
-export function setTokens(tokens) {
-  accessToken = tokens?.accessToken ?? null
-  refreshToken = tokens?.refreshToken ?? null
-  if (tokens) {
-    localStorage.setItem('cf_refresh_token', tokens.refreshToken)
-  } else {
-    localStorage.removeItem('cf_refresh_token')
-  }
-}
-
-export function loadStoredRefreshToken() {
-  refreshToken = localStorage.getItem('cf_refresh_token')
-  return refreshToken
+export function setAccessToken(token) {
+  accessToken = token
 }
 
 export function getAccessToken() {
@@ -51,21 +46,21 @@ apiClient.interceptors.response.use(
     const status = error.response?.status
     const code = error.response?.data?.error?.code
 
-    if (status === 401 && code === 'UNAUTHENTICATED' && refreshToken && !original._retried) {
+    if (status === 401 && code === 'UNAUTHENTICATED' && !original._retried) {
       original._retried = true
       try {
         refreshPromise ??= apiClient
-          .post('/auth/refresh', { refreshToken })
+          .post('/auth/refresh')
           .then((res) => res.data.data)
           .finally(() => {
             refreshPromise = null
           })
-        const tokens = await refreshPromise
-        setTokens(tokens)
-        original.headers.Authorization = `Bearer ${tokens.accessToken}`
+        const { accessToken: newAccessToken } = await refreshPromise
+        setAccessToken(newAccessToken)
+        original.headers.Authorization = `Bearer ${newAccessToken}`
         return apiClient(original)
       } catch (refreshError) {
-        setTokens(null)
+        setAccessToken(null)
         return Promise.reject(refreshError)
       }
     }

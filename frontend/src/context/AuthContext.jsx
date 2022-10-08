@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { apiClient, loadStoredRefreshToken, setTokens } from '../lib/apiClient'
+import { apiClient, setAccessToken } from '../lib/apiClient'
 import { getSocket } from '../lib/socket'
 
 const AuthContext = createContext(null)
@@ -9,28 +9,25 @@ export function AuthProvider({ children }) {
   const [status, setStatus] = useState('loading') // loading | authenticated | anonymous
 
   useEffect(() => {
-    const storedRefreshToken = loadStoredRefreshToken()
-    if (!storedRefreshToken) {
-      setStatus('anonymous')
-      return
-    }
-
+    // No token to check client-side anymore — the refresh token is an
+    // httpOnly cookie the browser sends automatically. Just attempt a
+    // refresh; it succeeds if a valid cookie exists from a previous visit.
     apiClient
-      .post('/auth/refresh', { refreshToken: storedRefreshToken })
+      .post('/auth/refresh')
       .then((res) => {
-        setTokens(res.data.data)
+        setAccessToken(res.data.data.accessToken)
         setUser(res.data.data.user)
         setStatus('authenticated')
       })
       .catch(() => {
-        setTokens(null)
+        setAccessToken(null)
         setStatus('anonymous')
       })
   }, [])
 
   async function login(credentials) {
     const res = await apiClient.post('/auth/login', credentials)
-    setTokens(res.data.data)
+    setAccessToken(res.data.data.accessToken)
     setUser(res.data.data.user)
     setStatus('authenticated')
   }
@@ -41,11 +38,8 @@ export function AuthProvider({ children }) {
   }
 
   async function logout() {
-    const refreshToken = localStorage.getItem('cf_refresh_token')
-    if (refreshToken) {
-      await apiClient.post('/auth/logout', { refreshToken }).catch(() => {})
-    }
-    setTokens(null)
+    await apiClient.post('/auth/logout').catch(() => {})
+    setAccessToken(null)
     setUser(null)
     setStatus('anonymous')
     getSocket().disconnect()
