@@ -77,12 +77,24 @@ Admin/moderation actions (`USER_SUSPENDED`, `HIDE_ITEM`, etc.) are recorded
 in `AuditLog` with the actor, action, entity, a metadata JSON blob, and the
 request IP — but **never** secrets, passwords, or tokens.
 
+## Refresh tokens: httpOnly cookie, not the response body
+
+The refresh token is set as an `httpOnly`, `sameSite=lax` cookie scoped to
+`/api/v1/auth` (`secure` in production) — it never appears in a JSON
+response body and client-side JS can't read it, so an XSS payload that can
+run arbitrary code in the page still can't exfiltrate it. Only the
+short-lived access token lives in JS memory (`apiClient.js`), never
+localStorage. `/auth/refresh` and `/auth/logout` read the cookie server-side
+and take no body at all now. Verified end-to-end with a real cookie jar:
+login sets the cookie, refresh rotates it, a request with no cookie is
+rejected, and a refresh attempt after logout is rejected.
+
 ## Known gaps (deliberate scope cuts, not oversights)
 
-- No CSRF protection: the API is token-based (Bearer auth), not cookie-
-  session-based, so CSRF doesn't apply the way it would to a cookie-auth app.
-- No password-reset flow yet (only registration/verification) — would follow
-  the same signed-JWT pattern as email verification.
-- Refresh tokens are returned in the JSON body rather than an httpOnly
-  cookie; a production deployment should move them to an httpOnly,
-  SameSite=Strict cookie to reduce XSS exposure.
+- No CSRF protection beyond `sameSite=lax` on the refresh cookie: the access
+  token is Bearer-auth (not cookie-based) for every other request, so CSRF
+  doesn't apply to those the way it would to a fully cookie-session app: an
+  attacker page can't attach a stolen access token it never had access to.
+  `sameSite=lax` on the refresh cookie itself blocks it being sent on a
+  cross-site POST from an attacker page (lax still allows top-level
+  navigation, which doesn't apply to an XHR-driven /auth/refresh call).

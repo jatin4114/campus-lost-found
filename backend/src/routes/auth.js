@@ -6,7 +6,6 @@ import { validate } from '../middleware/validate.js'
 import {
   forgotPasswordSchema,
   loginSchema,
-  refreshSchema,
   registerSchema,
   resetPasswordSchema,
   verifyEmailSchema,
@@ -16,8 +15,8 @@ export const authRouter = Router()
 
 authRouter.post('/register', authRateLimiter, validate(registerSchema), authController.register)
 authRouter.post('/login', authRateLimiter, validate(loginSchema), authController.login)
-authRouter.post('/refresh', validate(refreshSchema), authController.refresh)
-authRouter.post('/logout', validate(refreshSchema), authController.logout)
+authRouter.post('/refresh', authController.refresh)
+authRouter.post('/logout', authController.logout)
 authRouter.post('/verify-email', validate(verifyEmailSchema), authController.verifyEmail)
 authRouter.post('/forgot-password', authRateLimiter, validate(forgotPasswordSchema), authController.forgotPassword)
 authRouter.post('/reset-password', authRateLimiter, validate(resetPasswordSchema), authController.resetPassword)

@@ -41,15 +41,31 @@ describe('auth', () => {
     expect(res.body.error.code).toBe('INVALID_CREDENTIALS')
   })
 
-  it('rotates the refresh token and rejects reuse of the old one', async () => {
-    const { refreshToken } = await registerAndLogin()
+  it('rotates the refresh token (httpOnly cookie) and rejects reuse of the old one', async () => {
+    const { email } = await registerAndLogin()
 
-    const first = await request(app).post('/api/v1/auth/refresh').send({ refreshToken }).expect(200)
-    expect(first.body.data.refreshToken).not.toBe(refreshToken)
+    // The refresh token only ever travels as a Set-Cookie header now — grab
+    // it directly rather than going through registerAndLogin's agent, so we
+    // can deliberately replay the *original* cookie after it's rotated.
+    const loginRes = await request(app)
+      .post('/api/v1/auth/login')
+      .send({ email, password: 'Password123' })
+      .expect(200)
+    const originalCookie = loginRes.headers['set-cookie']
+    expect(originalCookie).toBeTruthy()
 
-    const reuse = await request(app).post('/api/v1/auth/refresh').send({ refreshToken })
+    const first = await request(app).post('/api/v1/auth/refresh').set('Cookie', originalCookie).expect(200)
+    expect(first.headers['set-cookie']).not.toEqual(originalCookie)
+
+    const reuse = await request(app).post('/api/v1/auth/refresh').set('Cookie', originalCookie)
     expect(reuse.status).toBe(401)
     expect(reuse.body.error.code).toBe('INVALID_REFRESH_TOKEN')
+  })
+
+  it('rejects /auth/refresh with no cookie at all', async () => {
+    const res = await request(app).post('/api/v1/auth/refresh')
+    expect(res.status).toBe(401)
+    expect(res.body.error.code).toBe('INVALID_REFRESH_TOKEN')
   })
 
   it('rejects /me without a token and accepts it with one', async () => {

@@ -19,7 +19,11 @@ describe('password reset', () => {
   })
 
   it('resets the password, logs in with the new one, and revokes old sessions', async () => {
-    const { email, refreshToken } = await registerAndLogin({ password: 'OldPassword1' })
+    // `agent` keeps the httpOnly refresh cookie from this login in its own
+    // jar — reusing it after the reset is what proves the old session was
+    // actually revoked, the same way a real browser tab would still be
+    // carrying the now-stale cookie.
+    const { email, agent } = await registerAndLogin({ password: 'OldPassword1' })
     const user = await prisma.user.findUniqueOrThrow({ where: { email } })
     const resetToken = signPasswordResetToken(user)
 
@@ -38,7 +42,7 @@ describe('password reset', () => {
       .send({ email, password: 'NewPassword2' })
     expect(newPasswordLogin.status).toBe(200)
 
-    const oldRefreshAttempt = await request(app).post('/api/v1/auth/refresh').send({ refreshToken })
+    const oldRefreshAttempt = await agent.post('/api/v1/auth/refresh')
     expect(oldRefreshAttempt.status).toBe(401)
   })
 

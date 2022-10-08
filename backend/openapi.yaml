@@ -135,40 +135,28 @@ paths:
                 password: { type: string }
       responses:
         '200':
-          description: Access + refresh tokens and the user
+          description: >-
+            Access token + user in the body; a refresh token is set as an
+            httpOnly cookie, not returned in the body
         '401': { description: Invalid credentials }
         '403': { description: Email not verified or account deactivated }
 
   /auth/refresh:
     post:
-      summary: Rotate a refresh token for a new access/refresh pair
+      summary: >-
+        Rotate the refresh token for a new access token. The refresh token
+        itself travels only as an httpOnly cookie (set by /auth/login),
+        never in the request/response body — the browser sends it
+        automatically.
       security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [refreshToken]
-              properties:
-                refreshToken: { type: string }
       responses:
-        '200': { description: New token pair }
-        '401': { description: Invalid/expired/reused refresh token }
+        '200': { description: New access token + user; a new refresh cookie is set }
+        '401': { description: Missing/invalid/expired/reused refresh token }
 
   /auth/logout:
     post:
-      summary: Revoke a refresh token
+      summary: Revoke the refresh token (read from the httpOnly cookie) and clear it
       security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [refreshToken]
-              properties:
-                refreshToken: { type: string }
       responses:
         '200': { description: Logged out }
 
