@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { ClaimForm } from '../../components/items/ClaimForm'
+import { ClaimsReview } from '../../components/items/ClaimsReview'
 import { useAuth } from '../../context/AuthContext'
 import { getMediaUrl } from '../../lib/apiClient'
+import { useMyClaims } from '../../services/claimsApi'
 import { useDeleteItemImage, useItem } from '../../services/itemsApi'
 
 export function ItemDetailPage() {
@@ -9,13 +12,16 @@ export function ItemDetailPage() {
   const { user } = useAuth()
   const { data: item, isLoading, isError } = useItem(id)
   const deleteImage = useDeleteItemImage()
+  const { data: myClaims } = useMyClaims()
   const [activeIndex, setActiveIndex] = useState(0)
+  const [justSubmitted, setJustSubmitted] = useState(false)
 
   if (isLoading) return <p className="text-slate-500">Loading…</p>
   if (isError || !item) return <p className="text-red-600">This item could not be found.</p>
 
   const isOwner = user?.id === item.userId
   const activeImage = item.images?.[activeIndex]
+  const myClaimOnThisItem = myClaims?.find((c) => c.itemId === item.id)
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -89,6 +95,26 @@ export function ItemDetailPage() {
           <dd className="text-slate-900">{item.status}</dd>
         </div>
       </dl>
+
+      {!isOwner && user && item.status === 'ACTIVE' && !myClaimOnThisItem && !justSubmitted && (
+        <ClaimForm itemId={item.id} onSubmitted={() => setJustSubmitted(true)} />
+      )}
+      {!isOwner && user && (myClaimOnThisItem || justSubmitted) && (
+        <p className="mt-4 text-sm text-slate-600">
+          You submitted a claim on this item
+          {myClaimOnThisItem ? ` — status: ${myClaimOnThisItem.status}` : ''}.
+        </p>
+      )}
+      {!user && item.status === 'ACTIVE' && (
+        <p className="mt-4 text-sm text-slate-600">
+          <Link to="/login" className="underline">
+            Log in
+          </Link>{' '}
+          to claim this item.
+        </p>
+      )}
+
+      {isOwner && <ClaimsReview itemId={item.id} />}
     </div>
   )
 }

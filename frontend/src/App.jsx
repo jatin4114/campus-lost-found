@@ -66,9 +66,15 @@ function App() {
                   <Route element={<RequireRole roles={['ADMIN', 'MODERATOR']} />}>
                     <Route path="/admin" element={<AdminLayout />}>
                       <Route index element={<AdminDashboardPage />} />
-                      <Route path="users" element={<AdminUsersPage />} />
                       <Route path="reports" element={<AdminReportsPage />} />
-                      <Route path="audit-logs" element={<AdminAuditLogsPage />} />
+                      {/* Users and audit logs are ADMIN-only on the backend
+                          (see backend/src/routes/admin.js) — gated again here
+                          so a MODERATOR never lands on a page whose data it
+                          can't fetch. */}
+                      <Route element={<RequireRole roles={['ADMIN']} />}>
+                        <Route path="users" element={<AdminUsersPage />} />
+                        <Route path="audit-logs" element={<AdminAuditLogsPage />} />
+                      </Route>
                     </Route>
                   </Route>
                 </Route>

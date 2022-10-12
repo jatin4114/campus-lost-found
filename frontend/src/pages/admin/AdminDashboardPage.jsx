@@ -1,4 +1,5 @@
 import { Skeleton } from '../../components/common/Skeleton'
+import { useAuth } from '../../context/AuthContext'
 import { downloadAdminExport, useAdminStats } from '../../services/adminApi'
 
 const EXPORTS = [
@@ -9,13 +10,14 @@ const EXPORTS = [
 
 const TILES = [
   { key: 'totalUsers', label: 'Users' },
-  { key: 'activeReports', label: 'Active Reports' },
-  { key: 'resolvedReports', label: 'Resolved' },
+  { key: 'activeReports', label: 'Active Items' },
+  { key: 'resolvedReports', label: 'Resolved Items' },
   { key: 'pendingClaims', label: 'Pending Claims' },
   { key: 'reportedContent', label: 'Reported Content' },
 ]
 
 export function AdminDashboardPage() {
+  const { user } = useAuth()
   const { data: stats, isLoading } = useAdminStats()
 
   return (
@@ -46,21 +48,23 @@ export function AdminDashboardPage() {
         )}
       </div>
 
-      <div className="mt-8">
-        <h2 className="text-sm font-medium text-slate-700">Export data</h2>
-        <div className="mt-2 flex gap-2">
-          {EXPORTS.map((item) => (
-            <button
-              key={item.resource}
-              type="button"
-              onClick={() => downloadAdminExport(item.resource)}
-              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
-            >
-              Export {item.label} CSV
-            </button>
-          ))}
+      {user?.role === 'ADMIN' && (
+        <div className="mt-8">
+          <h2 className="text-sm font-medium text-slate-700">Export data</h2>
+          <div className="mt-2 flex gap-2">
+            {EXPORTS.map((item) => (
+              <button
+                key={item.resource}
+                type="button"
+                onClick={() => downloadAdminExport(item.resource)}
+                className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+              >
+                Export {item.label} CSV
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
