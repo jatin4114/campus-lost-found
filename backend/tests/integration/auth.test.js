@@ -5,7 +5,7 @@ import { app, registerAndLogin } from './helpers.js'
 
 describe('auth', () => {
   it('registers, requires verification before login, then logs in after verifying', async () => {
-    const email = `verify-${Date.now()}@campus.edu`
+    const email = `verify-${Date.now()}@cuchd.in`
     await request(app)
       .post('/api/v1/auth/register')
       .send({ name: 'Verify Me', email, password: 'Password123' })

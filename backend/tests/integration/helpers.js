@@ -10,7 +10,7 @@ export const app = createApp()
 // call /refresh or /logout can reuse the same agent and have the cookie
 // sent automatically, the same way a real browser would.
 export async function registerAndLogin({ name = 'Test User', email, password = 'Password123' } = {}) {
-  const uniqueEmail = email ?? `test-${Date.now()}-${Math.random().toString(36).slice(2)}@campus.edu`
+  const uniqueEmail = email ?? `test-${Date.now()}-${Math.random().toString(36).slice(2)}@cuchd.in`
   const agent = request.agent(app)
 
   await agent.post('/api/v1/auth/register').send({ name, email: uniqueEmail, password }).expect(201)

@@ -81,7 +81,14 @@ export async function login({ email, password }) {
 
   const passwordMatches = await argon2.verify(user.passwordHash, password)
   if (!passwordMatches) {
-    await userRepo.recordFailedLogin(user.id, user.failedLoginAttempts)
+    const updated = await userRepo.recordFailedLogin(user.id, user.failedLoginAttempts)
+    if (updated.lockedUntil && updated.lockedUntil > new Date()) {
+      throw new ApiError(
+        423,
+        'ACCOUNT_LOCKED',
+        'Too many failed login attempts. Please try again in a few minutes.',
+      )
+    }
     throw new ApiError(401, 'INVALID_CREDENTIALS', 'Incorrect email or password.')
   }
 

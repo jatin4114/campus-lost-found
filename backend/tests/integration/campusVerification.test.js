@@ -6,21 +6,21 @@ import { app } from './helpers.js'
 async function loginAsAdmin() {
   const res = await request(app)
     .post('/api/v1/auth/login')
-    .send({ email: 'admin@campus.edu', password: 'Password123!' })
+    .send({ email: 'admin@cuchd.in', password: 'Password123!' })
     .expect(200)
   return res.body.data.accessToken
 }
 
 describe('campus email verification', () => {
   it('assigns the matching campus for a recognized domain', async () => {
-    const email = `campus-match-${Date.now()}@campus.edu`
+    const email = `campus-match-${Date.now()}@cuchd.in`
     await request(app)
       .post('/api/v1/auth/register')
       .send({ name: 'Campus Match', email, password: 'Password123' })
       .expect(201)
 
     const user = await prisma.user.findUniqueOrThrow({ where: { email } })
-    const campus = await prisma.campus.findUnique({ where: { domain: 'campus.edu' } })
+    const campus = await prisma.campus.findUnique({ where: { domain: 'cuchd.in' } })
     expect(user.campusId).toBe(campus.id)
   })
 

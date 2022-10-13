@@ -8,10 +8,10 @@ describe('password reset', () => {
   it('forgot-password never reveals whether an email exists', async () => {
     const knownRes = await request(app)
       .post('/api/v1/auth/forgot-password')
-      .send({ email: 'alice@campus.edu' })
+      .send({ email: 'aarav.sharma@cuchd.in' })
     const unknownRes = await request(app)
       .post('/api/v1/auth/forgot-password')
-      .send({ email: 'definitely-not-a-real-user@campus.edu' })
+      .send({ email: 'definitely-not-a-real-user@cuchd.in' })
 
     expect(knownRes.status).toBe(200)
     expect(unknownRes.status).toBe(200)
