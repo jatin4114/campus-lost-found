@@ -30,6 +30,17 @@ content, user moderation, and keep an audit trail of sensitive actions.
   (auth, items, claims), all passing
 - **API docs** — interactive OpenAPI/Swagger at `/api/docs`
 
+## Screenshots
+
+Full walkthrough (anonymous, student, moderator, and admin views) in
+[`docs/screenshots/`](docs/screenshots/):
+
+| | |
+|---|---|
+| ![Landing page](docs/screenshots/01-landing.png) | ![Dashboard](docs/screenshots/06-dashboard.png) |
+| ![Browse items](docs/screenshots/07-browse-items.png) | ![Item detail](docs/screenshots/13-item-detail.png) |
+| ![Messages](docs/screenshots/15-conversation.png) | ![Admin dashboard](docs/screenshots/18-admin-dashboard.png) |
+
 ## Architecture
 
 See [`docs/architecture.md`](docs/architecture.md) for the full breakdown.
