@@ -4,7 +4,7 @@ import { ClaimForm } from '../../components/items/ClaimForm'
 import { ClaimsReview } from '../../components/items/ClaimsReview'
 import { useAuth } from '../../context/AuthContext'
 import { getMediaUrl } from '../../lib/apiClient'
-import { useMyClaims } from '../../services/claimsApi'
+import { useCancelClaim, useMyClaims } from '../../services/claimsApi'
 import { useDeleteItemImage, useItem } from '../../services/itemsApi'
 
 export function ItemDetailPage() {
@@ -13,6 +13,7 @@ export function ItemDetailPage() {
   const { data: item, isLoading, isError } = useItem(id)
   const deleteImage = useDeleteItemImage()
   const { data: myClaims } = useMyClaims()
+  const cancelClaim = useCancelClaim()
   const [activeIndex, setActiveIndex] = useState(0)
   const [justSubmitted, setJustSubmitted] = useState(false)
 
@@ -21,7 +22,13 @@ export function ItemDetailPage() {
 
   const isOwner = user?.id === item.userId
   const activeImage = item.images?.[activeIndex]
-  const myClaimOnThisItem = myClaims?.find((c) => c.itemId === item.id)
+  // A REJECTED or CANCELLED claim shouldn't block trying again — the backend
+  // itself allows resubmitting once the item is ACTIVE again (see
+  // claimRepo.rejectClaim/cancelClaim reverting item status), so only a
+  // still-active claim (PENDING/ACCEPTED) should hide the form.
+  const myClaimOnThisItem = myClaims?.find(
+    (c) => c.itemId === item.id && (c.status === 'PENDING' || c.status === 'ACCEPTED'),
+  )
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -103,6 +110,22 @@ export function ItemDetailPage() {
         <p className="mt-4 text-sm text-slate-600">
           You submitted a claim on this item
           {myClaimOnThisItem ? ` — status: ${myClaimOnThisItem.status}` : ''}.
+          {myClaimOnThisItem?.status === 'PENDING' && (
+            <>
+              {' '}
+              <button
+                type="button"
+                onClick={() => {
+                  cancelClaim.mutate(myClaimOnThisItem.id)
+                  setJustSubmitted(false)
+                }}
+                disabled={cancelClaim.isPending}
+                className="text-slate-900 underline disabled:opacity-50"
+              >
+                Cancel claim
+              </button>
+            </>
+          )}
         </p>
       )}
       {!user && item.status === 'ACTIVE' && (

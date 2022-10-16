@@ -49,6 +49,17 @@ export function useRejectClaim() {
   })
 }
 
+export function useCancelClaim() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (claimId) => (await apiClient.post(`/claims/${claimId}/cancel`)).data.data.claim,
+    onSuccess: (claim) => {
+      queryClient.invalidateQueries({ queryKey: ['claims', 'mine'] })
+      queryClient.invalidateQueries({ queryKey: ['items', claim.itemId] })
+    },
+  })
+}
+
 export function useResolveItem() {
   const queryClient = useQueryClient()
   return useMutation({
