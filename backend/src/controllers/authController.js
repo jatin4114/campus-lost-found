@@ -65,6 +65,11 @@ export async function verifyEmail(req, res) {
   res.json({ success: true, data: { user } })
 }
 
+export async function resendVerification(req, res) {
+  await authService.resendVerification(req.body)
+  res.json({ success: true, data: null })
+}
+
 export async function forgotPassword(req, res) {
   await authService.forgotPassword(req.body)
   res.json({ success: true, data: null })

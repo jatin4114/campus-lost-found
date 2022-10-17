@@ -154,6 +154,17 @@ export async function verifyEmail({ token }) {
   return userRepo.toPublicUser(updated)
 }
 
+export async function resendVerification({ email }) {
+  const user = await userRepo.findByEmail(email)
+  // Same non-revealing shape as forgotPassword — and silently no-op for an
+  // already-verified account rather than erroring, since a user who forgot
+  // they'd already verified shouldn't learn that from this endpoint either.
+  if (!user || user.isVerified) return
+
+  const verificationToken = signEmailVerificationToken(user)
+  await sendVerificationEmail(user, verificationToken)
+}
+
 export async function forgotPassword({ email }) {
   const user = await userRepo.findByEmail(email)
   // Always report success — never reveal whether an email is registered.

@@ -7,6 +7,7 @@ import {
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
+  resendVerificationSchema,
   resetPasswordSchema,
   verifyEmailSchema,
 } from '../validators/authValidators.js'
@@ -18,6 +19,12 @@ authRouter.post('/login', authRateLimiter, validate(loginSchema), authController
 authRouter.post('/refresh', authController.refresh)
 authRouter.post('/logout', authController.logout)
 authRouter.post('/verify-email', validate(verifyEmailSchema), authController.verifyEmail)
+authRouter.post(
+  '/resend-verification',
+  authRateLimiter,
+  validate(resendVerificationSchema),
+  authController.resendVerification,
+)
 authRouter.post('/forgot-password', authRateLimiter, validate(forgotPasswordSchema), authController.forgotPassword)
 authRouter.post('/reset-password', authRateLimiter, validate(resetPasswordSchema), authController.resetPassword)
 authRouter.get('/me', requireAuth, authController.me)
