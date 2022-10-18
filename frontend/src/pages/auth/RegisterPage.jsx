@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
+import { PasswordInput } from '../../components/common/PasswordInput'
 import { useAuth } from '../../context/AuthContext'
 import { registerSchema } from '../../schemas/authSchemas'
 
@@ -83,9 +84,8 @@ export function RegisterPage() {
           <label htmlFor="password" className="block text-sm font-medium text-slate-700">
             Password
           </label>
-          <input
+          <PasswordInput
             id="password"
-            type="password"
             autoComplete="new-password"
             aria-invalid={Boolean(errors.password)}
             aria-describedby={errors.password ? 'password-error' : undefined}

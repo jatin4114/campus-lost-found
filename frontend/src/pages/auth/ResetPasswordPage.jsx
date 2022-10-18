@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
+import { PasswordInput } from '../../components/common/PasswordInput'
 import { apiClient } from '../../lib/apiClient'
 
 const schema = z.object({
@@ -65,9 +66,9 @@ export function ResetPasswordPage() {
           <label htmlFor="password" className="block text-sm font-medium text-slate-700">
             New password
           </label>
-          <input
+          <PasswordInput
             id="password"
-            type="password"
+            autoComplete="new-password"
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
             {...register('password')}
           />
