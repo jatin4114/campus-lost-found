@@ -1,10 +1,30 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useConversations } from '../../services/conversationsApi'
 import { NotificationBell } from './NotificationBell'
+
+const ROLE_LABELS = {
+  ADMIN: 'Admin',
+  MODERATOR: 'Moderator',
+  STUDENT: 'Student',
+}
+
+function NavItem({ to, children }) {
+  return (
+    <NavLink
+      to={to}
+      className={({ isActive }) => (isActive ? 'font-medium text-slate-900' : 'hover:text-slate-900')}
+    >
+      {children}
+    </NavLink>
+  )
+}
 
 export function Navbar() {
   const { user, status, logout } = useAuth()
   const navigate = useNavigate()
+  const { data: conversations } = useConversations()
+  const unreadMessages = conversations?.reduce((sum, c) => sum + (c.unreadCount > 0 ? 1 : 0), 0) ?? 0
 
   async function handleLogout() {
     await logout()
@@ -20,17 +40,34 @@ export function Navbar() {
         <nav className="flex items-center gap-4 text-sm text-slate-600">
           {status === 'authenticated' ? (
             <>
-              <Link to="/dashboard" className="hover:text-slate-900">Dashboard</Link>
-              <Link to="/items" className="hover:text-slate-900">Browse</Link>
-              <Link to="/report" className="hover:text-slate-900">Report Item</Link>
-              <Link to="/my-reports" className="hover:text-slate-900">My Reports</Link>
-              <Link to="/matches" className="hover:text-slate-900">Matches</Link>
-              <Link to="/messages" className="hover:text-slate-900">Messages</Link>
+              <NavItem to="/dashboard">Dashboard</NavItem>
+              <NavItem to="/items">Browse</NavItem>
+              <NavItem to="/report">Report Item</NavItem>
+              <NavItem to="/my-reports">My Reports</NavItem>
+              <NavItem to="/matches">Matches</NavItem>
+              <span className="relative">
+                <NavItem to="/messages">Messages</NavItem>
+                {unreadMessages > 0 && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -right-3 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-medium text-white"
+                  >
+                    {unreadMessages > 9 ? '9+' : unreadMessages}
+                  </span>
+                )}
+              </span>
               <NotificationBell />
               {(user?.role === 'ADMIN' || user?.role === 'MODERATOR') && (
-                <Link to="/admin" className="hover:text-slate-900">Admin</Link>
+                <NavItem to="/admin">Admin</NavItem>
               )}
-              <span className="text-slate-400">{user?.name}</span>
+              <span className="flex items-center gap-1.5 text-slate-400">
+                {user?.name}
+                {user?.role && user.role !== 'STUDENT' && (
+                  <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                    {ROLE_LABELS[user.role]}
+                  </span>
+                )}
+              </span>
               <button
                 type="button"
                 onClick={handleLogout}
