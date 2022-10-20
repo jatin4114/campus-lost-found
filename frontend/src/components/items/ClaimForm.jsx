@@ -63,14 +63,18 @@ export function ClaimForm({ itemId, onSubmitted }) {
     <form onSubmit={handleSubmit} className="mt-4 space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
       <p className="text-sm font-medium text-slate-900">Claim this item</p>
       <div>
-        <label htmlFor="claim-message" className="block text-sm font-medium text-slate-700">
-          Why is this yours?
-        </label>
+        <div className="flex items-baseline justify-between">
+          <label htmlFor="claim-message" className="block text-sm font-medium text-slate-700">
+            Why is this yours?
+          </label>
+          <span className="text-xs text-slate-400">{message.length}/2000</span>
+        </div>
         <textarea
           id="claim-message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           rows={3}
+          maxLength={2000}
           className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
         />
       </div>

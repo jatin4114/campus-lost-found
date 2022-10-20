@@ -16,6 +16,7 @@ export function ItemDetailPage() {
   const cancelClaim = useCancelClaim()
   const [activeIndex, setActiveIndex] = useState(0)
   const [justSubmitted, setJustSubmitted] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
 
   if (isLoading) return <p className="text-slate-500">Loading…</p>
   if (isError || !item) return <p className="text-red-600">This item could not be found.</p>
@@ -30,8 +31,18 @@ export function ItemDetailPage() {
     (c) => c.itemId === item.id && (c.status === 'PENDING' || c.status === 'ACCEPTED'),
   )
 
+  async function handleCopyLink() {
+    await navigator.clipboard.writeText(window.location.href)
+    setLinkCopied(true)
+    setTimeout(() => setLinkCopied(false), 2000)
+  }
+
   return (
     <div className="mx-auto max-w-2xl">
+      <Link to="/items" className="mb-4 inline-block text-sm text-slate-600 hover:text-slate-900">
+        ← Back to browse
+      </Link>
+
       {item.images?.length > 0 && (
         <div className="mb-6">
           <img
@@ -80,9 +91,14 @@ export function ItemDetailPage() {
           {item.type}
         </span>
       </div>
-      <Link to={`/items/${item.id}/flyer`} className="mt-2 inline-block text-sm text-slate-600 underline">
-        Print/share flyer
-      </Link>
+      <div className="mt-2 flex items-center gap-3 text-sm">
+        <Link to={`/items/${item.id}/flyer`} className="text-slate-600 underline">
+          Print/share flyer
+        </Link>
+        <button type="button" onClick={handleCopyLink} className="text-slate-600 underline">
+          {linkCopied ? 'Copied!' : 'Copy link'}
+        </button>
+      </div>
       <p className="mt-4 whitespace-pre-wrap text-slate-700">{item.description}</p>
       <dl className="mt-6 grid grid-cols-2 gap-4 text-sm">
         <div>
