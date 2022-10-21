@@ -15,16 +15,21 @@ export function ReportItemPage() {
   const navigate = useNavigate()
   const [serverError, setServerError] = useState(null)
   const [images, setImages] = useState([])
+  const [imagesTruncated, setImagesTruncated] = useState(false)
+  const today = new Date().toISOString().slice(0, 10)
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm({ resolver: zodResolver(reportItemSchema), defaultValues: { type: 'LOST' } })
+  const descriptionValue = watch('description', '')
 
   function handleImagesChange(e) {
-    const files = Array.from(e.target.files ?? []).slice(0, MAX_IMAGES)
-    setImages(files)
+    const selected = Array.from(e.target.files ?? [])
+    setImagesTruncated(selected.length > MAX_IMAGES)
+    setImages(selected.slice(0, MAX_IMAGES))
   }
 
   async function onSubmit(values) {
@@ -63,6 +68,7 @@ export function ReportItemPage() {
           <label htmlFor="title" className="block text-sm font-medium text-slate-700">Title</label>
           <input
             id="title"
+            autoFocus
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
             {...register('title')}
           />
@@ -104,6 +110,7 @@ export function ReportItemPage() {
           <input
             id="eventDate"
             type="date"
+            max={today}
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
             {...register('eventDate')}
           />
@@ -111,10 +118,14 @@ export function ReportItemPage() {
         </div>
 
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-slate-700">Description</label>
+          <div className="flex items-baseline justify-between">
+            <label htmlFor="description" className="block text-sm font-medium text-slate-700">Description</label>
+            <span className="text-xs text-slate-400">{descriptionValue.length}/2000</span>
+          </div>
           <textarea
             id="description"
             rows={4}
+            maxLength={2000}
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
             {...register('description')}
           />
@@ -135,6 +146,9 @@ export function ReportItemPage() {
           />
           {images.length > 0 && (
             <p className="mt-1 text-xs text-slate-500">{images.length} photo(s) selected</p>
+          )}
+          {imagesTruncated && (
+            <p className="mt-1 text-xs text-amber-600">Only the first {MAX_IMAGES} photos will be uploaded.</p>
           )}
         </div>
 

@@ -54,6 +54,7 @@ export function LoginPage() {
             id="email"
             type="email"
             autoComplete="email"
+            autoFocus
             aria-invalid={Boolean(errors.email)}
             aria-describedby={errors.email ? 'email-error' : undefined}
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"

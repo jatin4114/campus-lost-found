@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { PasswordInput } from '../../components/common/PasswordInput'
+import { PasswordRequirements } from '../../components/common/PasswordRequirements'
 import { useAuth } from '../../context/AuthContext'
 import { registerSchema } from '../../schemas/authSchemas'
 
@@ -13,8 +14,10 @@ export function RegisterPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm({ resolver: zodResolver(registerSchema) })
+  const passwordValue = watch('password', '')
 
   async function onSubmit(values) {
     setServerError(null)
@@ -50,6 +53,7 @@ export function RegisterPage() {
           </label>
           <input
             id="name"
+            autoFocus
             aria-invalid={Boolean(errors.name)}
             aria-describedby={errors.name ? 'name-error' : undefined}
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
@@ -97,6 +101,7 @@ export function RegisterPage() {
               {errors.password.message}
             </p>
           )}
+          <PasswordRequirements value={passwordValue} />
         </div>
         {serverError && (
           <p role="alert" className="text-sm text-red-600">
