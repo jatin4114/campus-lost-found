@@ -1,10 +1,21 @@
 import { useState } from 'react'
 import { ListSkeleton } from '../components/common/Skeleton'
+import { formatRelativeTime } from '../lib/dateUtils'
 import {
   useMarkAllNotificationsRead,
   useMarkNotificationRead,
   useNotifications,
 } from '../services/notificationsApi'
+
+const TYPE_ICONS = {
+  MATCH_FOUND: '🔍',
+  CLAIM_SUBMITTED: '📨',
+  CLAIM_ACCEPTED: '✅',
+  CLAIM_REJECTED: '✖️',
+  NEW_MESSAGE: '💬',
+  ITEM_RESOLVED: '🎉',
+  SAVED_SEARCH_MATCH: '🔔',
+}
 
 export function NotificationsPage() {
   const [page, setPage] = useState(1)
@@ -41,9 +52,11 @@ export function NotificationsPage() {
               onClick={() => !n.read && markRead.mutate(n.id)}
               className={`block w-full p-4 text-left ${n.read ? 'bg-white' : 'bg-slate-50'}`}
             >
-              <p className="font-medium text-slate-900">{n.title}</p>
+              <p className="font-medium text-slate-900">
+                <span aria-hidden="true">{TYPE_ICONS[n.type] ?? '🔔'}</span> {n.title}
+              </p>
               <p className="mt-1 text-sm text-slate-600">{n.message}</p>
-              <p className="mt-1 text-xs text-slate-400">{new Date(n.createdAt).toLocaleString()}</p>
+              <p className="mt-1 text-xs text-slate-400">{formatRelativeTime(n.createdAt)}</p>
             </button>
           ))}
         </div>
