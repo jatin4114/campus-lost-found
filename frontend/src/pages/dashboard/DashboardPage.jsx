@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { MatchCard } from '../../components/items/MatchCard'
 import { useAuth } from '../../context/AuthContext'
+import { useClaimsOnMyItems } from '../../services/claimsApi'
 import { useMyMatches } from '../../services/matchesApi'
 import { useMyItems } from '../../services/itemsApi'
 
@@ -8,16 +9,37 @@ export function DashboardPage() {
   const { user } = useAuth()
   const { data: items } = useMyItems()
   const { data: matches } = useMyMatches()
+  const { data: claimsOnMyItems } = useClaimsOnMyItems()
 
   const activeCount = items?.filter((i) => i.status === 'ACTIVE').length ?? 0
   const resolvedCount = items?.filter((i) => i.status === 'RESOLVED').length ?? 0
   const prominentMatches = matches?.filter((m) => m.tier !== 'WEAK').slice(0, 3)
+  const pendingClaimsCount = claimsOnMyItems?.filter((c) => c.status === 'PENDING').length ?? 0
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-slate-900">
-        Welcome back, {user?.name?.split(' ')[0]}
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-slate-900">
+          Welcome back, {user?.name?.split(' ')[0]}
+        </h1>
+        <Link
+          to="/report"
+          className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700"
+        >
+          + Report an item
+        </Link>
+      </div>
+
+      {pendingClaimsCount > 0 && (
+        <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          You have {pendingClaimsCount} pending claim{pendingClaimsCount === 1 ? '' : 's'} to review —
+          see them on the item's page under{' '}
+          <Link to="/my-reports" className="underline">
+            My Reports
+          </Link>
+          .
+        </p>
+      )}
 
       <div className="mt-6 grid grid-cols-3 gap-4 text-center">
         <div className="rounded-lg border border-slate-200 bg-white p-4">
