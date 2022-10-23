@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ListSkeleton } from '../../components/common/Skeleton'
+import { formatRelativeTime } from '../../lib/dateUtils'
 import { useAdminReports, useReviewReport } from '../../services/adminApi'
 
 const ACTIONS = [
@@ -37,7 +38,8 @@ export function AdminReportsPage() {
           <div key={report.id} className="rounded-lg border border-slate-200 bg-white p-4">
             <p className="font-medium text-slate-900">{report.item.title}</p>
             <p className="mt-1 text-sm text-slate-600">
-              Reported by {report.reporter.name} — {report.reason}
+              Reported by {report.reporter.name} — {report.reason} ·{' '}
+              <span className="text-slate-400">{formatRelativeTime(report.createdAt)}</span>
             </p>
             {report.description && <p className="mt-1 text-sm text-slate-500">{report.description}</p>}
             {status === 'PENDING' && (
