@@ -71,6 +71,7 @@ export function ItemDetailPage() {
                     type="button"
                     aria-label={`Delete photo ${index + 1}`}
                     onClick={() => {
+                      if (!window.confirm('Delete this photo? This can\'t be undone.')) return
                       setActiveIndex(0)
                       deleteImage.mutate({ itemId: item.id, imageId: image.id })
                     }}
