@@ -1,3 +1,4 @@
+import { formatRelativeTime } from '../../lib/dateUtils'
 import { useAcceptClaim, useClaimsOnMyItems, useRejectClaim } from '../../services/claimsApi'
 
 const STATUS_STYLES = {
@@ -24,7 +25,10 @@ export function ClaimsReview({ itemId }) {
           <div key={claim.id} className="rounded-lg border border-slate-200 p-4">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="text-sm font-medium text-slate-900">{claim.claimant?.name}</p>
+                <p className="text-sm font-medium text-slate-900">
+                  {claim.claimant?.name}{' '}
+                  <span className="font-normal text-slate-400">· {formatRelativeTime(claim.createdAt)}</span>
+                </p>
                 <p className="mt-1 text-sm text-slate-700">{claim.message}</p>
               </div>
               <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-medium ${STATUS_STYLES[claim.status]}`}>
