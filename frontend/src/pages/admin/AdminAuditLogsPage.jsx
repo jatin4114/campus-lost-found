@@ -1,4 +1,5 @@
 import { TableRowsSkeleton } from '../../components/common/Skeleton'
+import { formatRelativeTime } from '../../lib/dateUtils'
 import { useAuditLogs } from '../../services/adminApi'
 
 export function AdminAuditLogsPage() {
@@ -21,10 +22,14 @@ export function AdminAuditLogsPage() {
             {isLoading && <TableRowsSkeleton columns={4} />}
             {logs?.map((log) => (
               <tr key={log.id} className="border-b border-slate-100 last:border-0">
-                <td className="p-3 text-slate-500">{new Date(log.createdAt).toLocaleString()}</td>
+                <td className="p-3 text-slate-500" title={new Date(log.createdAt).toLocaleString()}>
+                  {formatRelativeTime(log.createdAt)}
+                </td>
                 <td className="p-3">{log.actor?.name ?? 'System'}</td>
                 <td className="p-3 font-mono text-xs">{log.action}</td>
-                <td className="p-3 text-slate-500">{log.entityType} · {log.entityId.slice(0, 8)}</td>
+                <td className="p-3 text-slate-500" title={log.entityId}>
+                  {log.entityType} · {log.entityId.slice(0, 8)}
+                </td>
               </tr>
             ))}
           </tbody>
