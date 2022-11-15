@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { formatRelativeTime } from '../../lib/dateUtils'
 import { useDismissMatch } from '../../services/matchesApi'
 
 const TIER_STYLES = {
@@ -30,6 +31,7 @@ export function MatchCard({ match }) {
               this {mineIsLost ? 'found' : 'lost'} item
             </Link>
           </p>
+          <p className="mt-1 text-xs text-slate-400">Matched {formatRelativeTime(match.createdAt)}</p>
         </div>
         <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-medium ${TIER_STYLES[match.tier]}`}>
           {match.score}% match
