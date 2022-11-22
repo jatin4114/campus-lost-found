@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { RatingPrompt } from '../../components/items/RatingPrompt'
 import { useAuth } from '../../context/AuthContext'
 import { apiClient } from '../../lib/apiClient'
@@ -82,7 +82,11 @@ export function ConversationPage() {
         <div className="flex items-center justify-between gap-2">
           <div>
             <p className="font-medium text-slate-900">{other?.name ?? 'Conversation'}</p>
-            <p className="text-sm text-slate-500">{conversation?.claim?.item?.title}</p>
+            {conversation?.claim?.item && (
+              <Link to={`/items/${conversation.claim.item.id}`} className="text-sm text-slate-500 underline">
+                {conversation.claim.item.title}
+              </Link>
+            )}
           </div>
           {itemStatus === 'CLAIMED' && (
             <button
